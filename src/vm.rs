@@ -5,7 +5,9 @@ pub const STACK_MAX: usize = 256;
 
 pub struct VM {
     code: Bytecodes,
+    // instruction pointer
     ip: usize,
+    // stack pointer
     stack_top: usize,
     stack: Vec<Value>,
 }
@@ -23,6 +25,10 @@ impl VM {
 
     pub fn interpret(&mut self) -> InterpretResult {
         loop {
+            if self.is_end() {
+                return InterpretResult::InterpretRuntimeError;
+            }
+
             let op: OpCode = self.read_opcode();
 
             match op {
@@ -93,4 +99,18 @@ impl VM {
     pub fn free(&mut self) {
         self.code.free();
     }
+
+    pub fn is_end(&self) -> bool {
+        self.ip >= self.code.code.len()
+    }
+}
+
+pub fn interpret(_input: String) -> InterpretResult {
+    let code: Bytecodes = Bytecodes::new();
+
+    let mut machine = VM::new(code);
+    machine.interpret();
+
+    machine.free();
+    InterpretResult::InterpretOk
 }
