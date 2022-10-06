@@ -1,15 +1,24 @@
+use crate::Bytecodes;
 use crate::lexer::Lexer;
 use crate::token::TokenType::TokenEof;
 
-pub fn compile(input: String) {
+struct Compiler {
+    bytecodes: Bytecodes,
+}
+
+impl Compiler {
+    pub fn new() -> Self {
+        Self { bytecodes: Bytecodes::new() }
+    }
+}
+
+pub fn compile(input: String) -> Compiler {
+    let compiler = Compiler::new();
     let lex = Lexer::new(&input);
 
-    println!("Compiler is running");
-
     for token in lex {
-        if token.is(TokenEof){
-            break
-        }
         println!("{:?}", token)
     }
+
+    compiler
 }

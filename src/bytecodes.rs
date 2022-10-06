@@ -18,7 +18,7 @@ impl Bytecodes {
         Self {
             code_count: 0,
             code_capacity: 0,
-            code: Vec::with_capacity(0),
+            code: Vec::new(),
             values_count: 0,
             values_capacity: 0,
             values: Vec::new(),

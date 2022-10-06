@@ -1,0 +1,9 @@
+print true;  // Not false.
+print false; // Not *not* false.
+
+print 1234;  // An integer.
+print 12.34; // A decimal number.
+
+print "I am a string";
+print "";    // The empty string.
+print "123"; // This is a string, not a number.

@@ -18,7 +18,7 @@ impl<'a> Lexer<'a> {
             len: input.len(),
             start: 0,
             current: 0,
-            line: 0,
+            line: 1,
         }
     }
 
@@ -60,7 +60,7 @@ impl<'a> Lexer<'a> {
             return None;
         }
 
-        let p = pos.unwrap_or(1);
+        let p = pos.unwrap_or(0);
         match self.input.get(self.current + p) {
             None => None,
             Some(val) => Some(*val as char)
@@ -119,7 +119,7 @@ impl<'a> Lexer<'a> {
             self.advance();
         }
 
-        if self.peek1_is('.') && self.peek_is_match(Some(2), is_digit) {
+        if self.peek1_is('.') && self.peek_is_match(Some(1), is_digit) {
             self.advance();
 
             while self.peek1_is_match(is_digit) {
@@ -172,10 +172,11 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespaces();
-        println!("Next!!! ");
+
         self.start = self.current;
         if self.is_end() {
-            return Some(self.make_token(TokenEof));
+            return None;
+            // return Some(self.make_token(TokenEof));
         }
 
         let ch = self.advance();
