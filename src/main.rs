@@ -6,6 +6,7 @@ use crate::opcode::OpCode;
 use crate::bytecodes::Bytecodes;
 use crate::vm::{InterpretResult};
 
+mod helpers;
 mod value;
 mod bytecodes;
 mod opcode;

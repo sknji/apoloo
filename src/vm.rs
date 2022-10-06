@@ -1,4 +1,5 @@
-use crate::{Bytecodes, OpCode};
+use crate::{Bytecodes, compiler, OpCode};
+use crate::compiler::compile;
 use crate::value::{print_value, Value};
 
 pub const STACK_MAX: usize = 256;
@@ -105,7 +106,8 @@ impl VM {
     }
 }
 
-pub fn interpret(_input: String) -> InterpretResult {
+pub fn interpret(input: String) -> InterpretResult {
+    compile(input);
     let code: Bytecodes = Bytecodes::new();
 
     let mut machine = VM::new(code);

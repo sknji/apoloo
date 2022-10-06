@@ -1,5 +1,6 @@
 use std::str;
-use crate::token::{Token, TokenType};
+use crate::helpers::*;
+use crate::token::*;
 use crate::token::TokenType::*;
 
 pub struct Lexer<'a> {
@@ -21,10 +22,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn peek_token(&self) -> Token {
-        self.make_token(TokenEof)
-    }
-
     fn make_token(&self, type_: TokenType) -> Token {
         Token::new(
             type_,
@@ -38,9 +35,9 @@ impl<'a> Lexer<'a> {
         Token::new(TokenError, msg, self.line)
     }
 
-    fn advance(&mut self) -> u8 {
+    fn advance(&mut self) -> char {
         self.current += 1;
-        *self.input.get(self.current - 1).unwrap()
+        *self.input.get(self.current - 1).unwrap() as char
     }
 
     fn matches(&mut self, ch: char) -> bool {
@@ -58,13 +55,47 @@ impl<'a> Lexer<'a> {
         true
     }
 
-    fn peek(&self) -> char {
-        self.input.get(self.current + 1).unwrap() as char
+    fn peek(&self, pos: Option<usize>) -> Option<char> {
+        if self.is_end() {
+            return None;
+        }
+
+        let p = pos.unwrap_or(1);
+        match self.input.get(self.current + p) {
+            None => None,
+            Some(val) => Some(*val as char)
+        }
+    }
+
+    fn peek_is(&self, ch: char, pos: Option<usize>) -> bool {
+        let c = self.peek(pos);
+        c.unwrap_or_default() == ch
+    }
+
+    fn peek_is_match(&self, pos: Option<usize>, f: fn(ch: char) -> bool) -> bool {
+        let c = self.peek(pos);
+        f(c.unwrap_or_default())
+    }
+
+    fn peek1(&self) -> Option<char> {
+        return self.peek(None);
+    }
+
+    fn peek1_is(&self, ch: char) -> bool {
+        return self.peek_is(ch, None);
+    }
+
+    fn peek1_is_match(&self, f: fn(ch: char) -> bool) -> bool {
+        self.peek_is_match(None, f)
     }
 
     fn skip_whitespaces(&mut self) {
         loop {
-            let ch = self.peek();
+            let ch = match self.peek1() {
+                None => return,
+                Some(c) => c
+            };
+
             match ch {
                 ' ' | '\r' | '\t' => {
                     self.advance();
@@ -73,10 +104,62 @@ impl<'a> Lexer<'a> {
                     self.line += 1;
                     self.advance();
                 }
-                '/' => {}
-                _ => {}
+                '/' if self.peek1_is('/') => {
+                    while !self.peek1_is('\n') && !self.is_end() {
+                        self.advance();
+                    }
+                }
+                _ => return,
             }
         }
+    }
+
+    fn number(&mut self) -> Token {
+        while self.peek1_is_match(is_digit) {
+            self.advance();
+        }
+
+        if self.peek1_is('.') && self.peek_is_match(Some(2), is_digit) {
+            self.advance();
+
+            while self.peek1_is_match(is_digit) {
+                self.advance();
+            }
+        }
+
+        self.make_token(TokenNumber)
+    }
+
+    fn string(&mut self) -> Token {
+        while !self.is_end() && !self.peek1_is('"') {
+            if self.peek1_is('\n') {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_end() {
+            return self.error_token("unterminated string.");
+        }
+
+        self.advance();
+
+        self.make_token(TokenString)
+    }
+
+    fn ident(&mut self) -> Token {
+        while self.peek1_is_match(is_alpha_num) {
+            self.advance();
+        }
+
+        let ident_type = self.ident_type();
+        self.make_token(ident_type)
+    }
+
+    fn ident_type(&mut self) -> TokenType {
+        let str = &self.input[self.start..self.current];
+        let str = str::from_utf8(&str).unwrap();
+        kw_type_from_str(str)
     }
 
     fn is_end(&self) -> bool {
@@ -89,13 +172,15 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespaces();
-
+        println!("Next!!! ");
         self.start = self.current;
         if self.is_end() {
             return Some(self.make_token(TokenEof));
         }
 
         let ch = self.advance();
+        if is_digit(ch) { return Some(self.number()); }
+        if is_alpha(ch) { return Some(self.ident()); }
 
         let token = match ch as char {
             '(' => self.make_token(TokenLeftParen),
@@ -137,6 +222,7 @@ impl<'a> Iterator for Lexer<'a> {
                 };
                 self.make_token(tok_type)
             }
+            '"' => self.string(),
             _ => self.error_token(format!("unexpected character {ch}").as_ref())
         };
 
