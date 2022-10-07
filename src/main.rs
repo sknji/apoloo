@@ -13,6 +13,8 @@ mod opcode;
 mod debug;
 mod token;
 mod lexer;
+mod parser;
+mod codegen;
 mod compiler;
 mod vm;
 

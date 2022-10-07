@@ -1,11 +1,11 @@
 use crate::{Bytecodes, compiler, OpCode};
-use crate::compiler::compile;
+use crate::compiler::Compiler;
 use crate::value::{print_value, Value};
 
 pub const STACK_MAX: usize = 256;
 
-pub struct VM {
-    code: Bytecodes,
+pub struct VM<'b> {
+    code: &'b  Bytecodes,
     // instruction pointer
     ip: usize,
     // stack pointer
@@ -19,8 +19,8 @@ pub enum InterpretResult {
     InterpretRuntimeError,
 }
 
-impl VM {
-    pub fn new(code: Bytecodes) -> VM {
+impl<'b> VM<'b> {
+    pub fn new(code: &'b Bytecodes) -> VM {
         Self { code, ip: 0, stack: Vec::new(), stack_top: 0 }
     }
 
@@ -98,7 +98,7 @@ impl VM {
     }
 
     pub fn free(&mut self) {
-        self.code.free();
+        // TODO:
     }
 
     pub fn is_end(&self) -> bool {
@@ -107,8 +107,9 @@ impl VM {
 }
 
 pub fn interpret(input: String) -> InterpretResult {
-    compile(input);
-    let code: Bytecodes = Bytecodes::new();
+    let mut compiler = Compiler::new(&input);
+
+    let code = compiler.compile();
 
     let mut machine = VM::new(code);
     machine.interpret();

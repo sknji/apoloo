@@ -23,12 +23,8 @@ impl<'a> Lexer<'a> {
     }
 
     fn make_token(&self, type_: TokenType) -> Token {
-        Token::new(
-            type_,
-            str::from_utf8(&self.input[self.start..self.current])
-                .unwrap(),
-            self.line,
-        )
+        let str = self.fetch(self.start, self.current);
+        Token::new(type_, str, self.line)
     }
 
     fn error_token(&self, msg: &str) -> Token {
@@ -156,34 +152,29 @@ impl<'a> Lexer<'a> {
         self.make_token(ident_type)
     }
 
+    fn fetch(&self, from: usize, to: usize) -> &str {
+        let str = &self.input[from..to];
+        str::from_utf8(&str).unwrap()
+    }
+
     fn ident_type(&mut self) -> TokenType {
-        let str = &self.input[self.start..self.current];
-        let str = str::from_utf8(&str).unwrap();
+        let str = self.fetch(self.start, self.current);
         kw_type_from_str(str)
     }
 
-    fn is_end(&self) -> bool {
-        self.current >= self.len
-    }
-}
-
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
+    pub fn scan_next(&mut self) -> Token {
         self.skip_whitespaces();
 
         self.start = self.current;
         if self.is_end() {
-            return None;
-            // return Some(self.make_token(TokenEof));
+            return self.make_token(TokenEof);
         }
 
         let ch = self.advance();
-        if is_digit(ch) { return Some(self.number()); }
-        if is_alpha(ch) { return Some(self.ident()); }
+        if is_digit(ch) { return self.number(); }
+        if is_alpha(ch) { return self.ident(); }
 
-        let token = match ch as char {
+        match ch as char {
             '(' => self.make_token(TokenLeftParen),
             ')' => self.make_token(TokenRightParen),
             '{' => self.make_token(TokenLeftBrace),
@@ -225,8 +216,24 @@ impl<'a> Iterator for Lexer<'a> {
             }
             '"' => self.string(),
             _ => self.error_token(format!("unexpected character {ch}").as_ref())
-        };
-
-        Some(token)
+        }
+    }
+    fn is_end(&self) -> bool {
+        self.current >= self.len
     }
 }
+
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let tok = self.scan_next();
+        if tok.is(TokenEof) {
+            return None;
+        }
+        Some(tok)
+    }
+}
+
+#[cfg(test)]
+mod tests {}

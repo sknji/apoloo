@@ -1,13 +1,13 @@
 use crate::token::TokenType::{TokenAnd, TokenClass, TokenElse, TokenFalse, TokenFor, TokenFun, TokenIdentifier, TokenIf, TokenNil, TokenOr, TokenPrint, TokenReturn, TokenSuper, TokenThis, TokenTrue, TokenVar, TokenWhile};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
-    token_type: TokenType,
-    raw: String,
-    line: i64,
+    pub(crate) token_type: TokenType,
+    pub(crate) raw: String,
+    pub(crate) line: i64,
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum TokenType {
     // Single-character tokens.
     TokenLeftParen,
@@ -88,5 +88,11 @@ pub fn kw_type_from_str(token_type: &str) -> TokenType {
         "this" => TokenThis,
         "true" => TokenTrue,
         _ => TokenIdentifier,
+    }
+}
+
+impl TokenType {
+    pub(crate) fn is(&self, rhs: &TokenType) -> bool {
+        self == rhs
     }
 }

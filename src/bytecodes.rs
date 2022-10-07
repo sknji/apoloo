@@ -31,6 +31,11 @@ impl Bytecodes {
         return self.code_count - 1;
     }
 
+    pub(crate) fn write2(&mut self, byte1: u8, byte2: u8) -> usize {
+        self.write(byte1);
+        self.write(byte2)
+    }
+
     pub(crate) fn add_const_val(&mut self, val: f64) -> usize {
         self.add_const(Value::new(val))
     }
