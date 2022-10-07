@@ -1,5 +1,6 @@
-use crate::{Bytecodes, compiler, OpCode};
+use crate::{Bytecodes, OpCode};
 use crate::compiler::Compiler;
+use crate::debug::debug_bytecode;
 use crate::value::{print_value, Value};
 
 pub const STACK_MAX: usize = 256;
@@ -110,6 +111,8 @@ pub fn interpret(input: String) -> InterpretResult {
     let mut compiler = Compiler::new(&input);
 
     let code = compiler.compile();
+
+    debug_bytecode(code, "MAIN");
 
     let mut machine = VM::new(code);
     machine.interpret();

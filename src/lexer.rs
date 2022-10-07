@@ -8,6 +8,7 @@ pub struct Lexer<'a> {
     start: usize,
     current: usize,
     line: i64,
+    col: i64,
     input: &'a [u8],
 }
 
@@ -19,20 +20,33 @@ impl<'a> Lexer<'a> {
             start: 0,
             current: 0,
             line: 1,
+            col: 0,
         }
     }
 
-    fn make_token(&self, type_: TokenType) -> Token {
+    fn make_token(&mut self, type_: TokenType) -> Token {
+        // println!("col:{}, curr:{}, start:{}", self.col, self.current, self.start);
+        self.col -= (self.current - self.start) as i64;
         let str = self.fetch(self.start, self.current);
-        Token::new(type_, str, self.line)
+        Token::new(type_, str, self.line, self.col)
+    }
+
+    pub(crate) fn incr_curr(&mut self) {
+        self.current += 1;
+        self.col += 1;
+    }
+
+    pub(crate) fn incr_line(&mut self) {
+        self.line += 1;
+        self.col = 0
     }
 
     fn error_token(&self, msg: &str) -> Token {
-        Token::new(TokenError, msg, self.line)
+        Token::new(TokenError, msg, self.line, self.col)
     }
 
     fn advance(&mut self) -> char {
-        self.current += 1;
+        self.incr_curr();
         *self.input.get(self.current - 1).unwrap() as char
     }
 
@@ -46,7 +60,7 @@ impl<'a> Lexer<'a> {
             return false;
         }
 
-        self.current += 1;
+        self.incr_curr();
 
         true
     }
@@ -97,7 +111,7 @@ impl<'a> Lexer<'a> {
                     self.advance();
                 }
                 '\n' => {
-                    self.line += 1;
+                    self.incr_line();
                     self.advance();
                 }
                 '/' if self.peek1_is('/') => {
@@ -129,7 +143,7 @@ impl<'a> Lexer<'a> {
     fn string(&mut self) -> Token {
         while !self.is_end() && !self.peek1_is('"') {
             if self.peek1_is('\n') {
-                self.line += 1;
+                self.incr_line();
             }
             self.advance();
         }

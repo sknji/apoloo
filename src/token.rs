@@ -5,6 +5,7 @@ pub struct Token {
     pub(crate) token_type: TokenType,
     pub(crate) raw: String,
     pub(crate) line: i64,
+    pub(crate) col: i64,
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -60,8 +61,8 @@ pub enum TokenType {
 }
 
 impl Token {
-    pub fn new(type_: TokenType, raw: &str, line: i64) -> Self {
-        Self { token_type: type_, raw: raw.into(), line }
+    pub fn new(type_: TokenType, raw: &str, line: i64, col: i64) -> Self {
+        Self { token_type: type_, raw: raw.into(), line, col }
     }
 
     pub fn is(&self, tok_type: TokenType) -> bool {

@@ -21,7 +21,7 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
 
     match bytecodes.code.get(offset) {
         None => {
-            print!("Unknown opcode\n");
+            println!("Unknown opcode");
             offset + 1
         }
         Some(op) => {
@@ -35,7 +35,7 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpMultiple => simple_instruction("OP_MULTIPLY", offset),
                 OpCode::OpDivide => simple_instruction("OP_DIVIDE", offset),
                 OpCode::OpUnKnown => {
-                    print!("Unknown opcode {:?} \n", op);
+                    println!("Unknown opcode {:?}", op);
                     offset + 1
                 }
             }
@@ -69,7 +69,7 @@ fn constant_instruction(name: &str, bytecodes: &Bytecodes, offset: usize) -> usi
 
     match bytecodes.values.get(constant as usize) {
         Some(val) => print_value(val),
-        None => print!("Unknown constant value\n"),
+        None => println!("Unknown constant value"),
     }
 
     offset + 2
