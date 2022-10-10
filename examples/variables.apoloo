@@ -1,0 +1,7 @@
+var breakfast = "bagels";
+print breakfast; // "bagels".
+breakfast = "beignets";
+print breakfast; // "beignets".
+
+var imAVariable = "here is my value";
+var iAmNil;

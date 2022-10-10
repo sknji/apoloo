@@ -1,13 +1,14 @@
 use crate::token::TokenType::{TokenAnd, TokenClass, TokenElse, TokenFalse, TokenFor, TokenFun, TokenIdentifier, TokenIf, TokenNil, TokenOr, TokenPrint, TokenReturn, TokenSuper, TokenThis, TokenTrue, TokenVar, TokenWhile};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
-    token_type: TokenType,
-    raw: String,
-    line: i64,
+    pub(crate) token_type: TokenType,
+    pub(crate) raw: String,
+    pub(crate) line: i64,
+    pub(crate) col: i64,
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum TokenType {
     // Single-character tokens.
     TokenLeftParen,
@@ -60,8 +61,8 @@ pub enum TokenType {
 }
 
 impl Token {
-    pub fn new(type_: TokenType, raw: &str, line: i64) -> Self {
-        Self { token_type: type_, raw: raw.into(), line }
+    pub fn new(type_: TokenType, raw: &str, line: i64, col: i64) -> Self {
+        Self { token_type: type_, raw: raw.into(), line, col }
     }
 
     pub fn is(&self, tok_type: TokenType) -> bool {
@@ -88,5 +89,11 @@ pub fn kw_type_from_str(token_type: &str) -> TokenType {
         "this" => TokenThis,
         "true" => TokenTrue,
         _ => TokenIdentifier,
+    }
+}
+
+impl TokenType {
+    pub(crate) fn is(&self, rhs: &TokenType) -> bool {
+        self == rhs
     }
 }

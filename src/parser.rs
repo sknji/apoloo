@@ -1,3 +1,193 @@
-struct ParseRule{
+use std::collections::HashMap;
 
+use crate::Bytecodes;
+use crate::codegen::Codegen;
+use crate::lexer::Lexer;
+use crate::OpCode::*;
+use crate::parser_rules::{ParsePrecedence, ParseRule};
+use crate::parser_rules::ParsePrecedence::*;
+use crate::token::{Token, TokenType};
+use crate::token::TokenType::*;
+
+pub(crate) struct Parser {
+    lex: Lexer,
+    pub(crate) codegen: Codegen,
+    curr_tok: Option<Token>,
+    prev_tok: Option<Token>,
+    pub(crate) parse_rules: HashMap<TokenType, ParseRule>,
+    pub(crate) had_error: bool,
+}
+
+impl<'a> Parser {
+    pub(crate) fn new(lex: Lexer) -> Parser {
+        let mut p = Parser {
+            lex,
+            curr_tok: None,
+            prev_tok: None,
+            codegen: Codegen::new(),
+            had_error: false,
+            parse_rules: HashMap::new(),
+        };
+
+        p.parse_rules = p.rules();
+
+        p
+    }
+
+    fn curr_is(&self, tok_type: TokenType) -> bool {
+        self.curr_tok_type().is(&tok_type)
+    }
+
+    pub(crate) fn advance(&mut self) {
+        self.prev_tok = self.curr_tok.clone();
+
+        loop {
+            self.curr_tok = Some(self.lex.scan_next());
+            match &self.curr_tok {
+                None => break,
+                Some(t) if !t.is(TokenError) => return,
+                _ => {}
+            }
+
+            self.error_at_curr("Error at advance current")
+        }
+    }
+
+    pub(crate) fn emit_return(&mut self) -> usize {
+        self.codegen.emit_return()
+    }
+
+    pub(crate) fn consume(&mut self, tok_type: TokenType, err_msg: &str) {
+        if self.curr_is(tok_type) {
+            self.advance();
+            return;
+        }
+
+        self.error_at_curr(err_msg);
+    }
+
+    pub(crate) fn prev_tok_type(&self) -> TokenType {
+        match &self.prev_tok.clone() {
+            Some(tok) => Some(&tok.token_type),
+            None => None,
+            _ => None
+        }.unwrap().clone()
+    }
+
+    pub(crate) fn curr_tok_type(&self) -> TokenType {
+        match &self.curr_tok.clone() {
+            Some(tok) => Some(&tok.token_type),
+            None => None,
+            _ => None
+        }.unwrap().clone()
+    }
+
+
+    pub(crate) fn grouping(&mut self) {
+        self.expression();
+        self.consume(TokenRightParen, "Expect ')' after expression.")
+    }
+
+    pub(crate) fn expression(&mut self) {
+        self.parse(&PrecedenceAssignment);
+    }
+
+    pub(crate) fn number(&mut self) {
+        let value = self.prev_tok.as_ref();
+        let value: f64 = match value {
+            None => 0.0,
+            Some(val) => {
+                val.raw.parse().unwrap_or(0.0)
+            }
+        };
+
+        self.codegen.emit_constant(value);
+    }
+
+    pub(crate) fn unary(&mut self) {
+        let prev_tok_type = self.prev_tok_type();
+
+        self.parse(&PrecedenceUnary);
+
+        if prev_tok_type.is(&TokenMinus) {
+            self.codegen.emit_byte(OpNegate.into());
+        }
+    }
+
+    pub(crate) fn binary(&mut self) {
+        let prev_tok_type = self.prev_tok_type();
+        let rule = self.get_rule(&prev_tok_type);
+
+        let precedence = &rule.precedence.add(1);
+        self.parse(precedence);
+
+        match prev_tok_type {
+            TokenType::TokenPlus => { self.codegen.emit_byte(OpAdd.into()); }
+            TokenType::TokenMinus => { self.codegen.emit_byte(OpSubtract.into()); }
+            TokenType::TokenStar => { self.codegen.emit_byte(OpMultiple.into()); }
+            TokenType::TokenSlash => { self.codegen.emit_byte(OpDivide.into()); }
+            _ => return,
+        }
+    }
+
+    pub(crate) fn error_at_curr(&mut self, msg: &str) {
+        self.error_at(&self.curr_tok.clone(), msg)
+    }
+
+    pub(crate) fn error(&mut self, msg: &str) {
+        self.error_at(&self.prev_tok.clone(), msg)
+    }
+
+    pub(crate) fn error_at(&mut self, token: &Option<Token>, msg: &str) {
+        let tok = token.as_ref().unwrap();
+
+        eprint!("[line {}] Error", tok.line);
+        match tok.token_type {
+            TokenEof => eprint!(" at end"),
+            TokenError => {}
+            _ => {
+                eprint!(" at {}", tok.raw)
+            }
+        }
+
+        eprintln!(": {}", msg);
+
+        self.had_error = true
+    }
+
+    pub(crate) fn parse(&mut self, precedence: &ParsePrecedence) {
+        self.advance();
+
+        let tok_type: &TokenType = &self.prev_tok_type();
+        let rule: &ParseRule = self.get_rule(tok_type);
+
+        let prefix_rule = rule.prefix;
+
+        match prefix_rule {
+            None => { self.error("Expected expression") }
+            Some(p) => { p(self) }
+        }
+
+        loop {
+            let curr_tok_type: &TokenType = &self.curr_tok_type();
+            let curr_rule: &ParseRule = self.get_rule(curr_tok_type);
+
+            let curr_precedence: &ParsePrecedence = &curr_rule.precedence;
+
+            if precedence > curr_precedence {
+                break;
+            }
+
+            self.advance();
+
+            let prev_tok_type: &TokenType = &self.prev_tok_type();
+            let infix: &ParseRule = self.get_rule(prev_tok_type);
+            let infix_rule = infix.infix;
+
+            match infix_rule {
+                None => { self.error("Expected expression") }
+                Some(i) => { i(self) }
+            }
+        }
+    }
 }

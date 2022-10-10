@@ -1,42 +1,55 @@
 use std::str;
+
 use crate::helpers::*;
 use crate::token::*;
 use crate::token::TokenType::*;
 
-pub struct Lexer<'a> {
+pub struct Lexer {
     len: usize,
     start: usize,
     current: usize,
     line: i64,
-    input: &'a [u8],
+    col: i64,
+    input: Vec<u8>,
 }
 
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Lexer<'a> {
+impl Lexer {
+    pub fn new(input: String) -> Lexer {
+        let b = input.trim().as_bytes().to_vec();
+        let length = b.len();
         Self {
-            input: input.as_ref(),
-            len: input.len(),
+            input: b,
+            len: length,
             start: 0,
             current: 0,
-            line: 0,
+            line: 1,
+            col: 0,
         }
     }
 
-    fn make_token(&self, type_: TokenType) -> Token {
-        Token::new(
-            type_,
-            str::from_utf8(&self.input[self.start..self.current])
-                .unwrap(),
-            self.line,
-        )
+    fn make_token(&mut self, type_: TokenType) -> Token {
+        // println!("col:{}, curr:{}, start:{}", self.col, self.current, self.start);
+        self.col -= (self.current - self.start) as i64;
+        let str = self.fetch(self.start, self.current);
+        Token::new(type_, str, self.line, self.col)
+    }
+
+    pub(crate) fn incr_curr(&mut self) {
+        self.current += 1;
+        self.col += 1;
+    }
+
+    pub(crate) fn incr_line(&mut self) {
+        self.line += 1;
+        self.col = 0
     }
 
     fn error_token(&self, msg: &str) -> Token {
-        Token::new(TokenError, msg, self.line)
+        Token::new(TokenError, msg, self.line, self.col)
     }
 
     fn advance(&mut self) -> char {
-        self.current += 1;
+        self.incr_curr();
         *self.input.get(self.current - 1).unwrap() as char
     }
 
@@ -50,7 +63,7 @@ impl<'a> Lexer<'a> {
             return false;
         }
 
-        self.current += 1;
+        self.incr_curr();
 
         true
     }
@@ -60,7 +73,7 @@ impl<'a> Lexer<'a> {
             return None;
         }
 
-        let p = pos.unwrap_or(1);
+        let p = pos.unwrap_or(0);
         match self.input.get(self.current + p) {
             None => None,
             Some(val) => Some(*val as char)
@@ -101,7 +114,7 @@ impl<'a> Lexer<'a> {
                     self.advance();
                 }
                 '\n' => {
-                    self.line += 1;
+                    self.incr_line();
                     self.advance();
                 }
                 '/' if self.peek1_is('/') => {
@@ -119,7 +132,7 @@ impl<'a> Lexer<'a> {
             self.advance();
         }
 
-        if self.peek1_is('.') && self.peek_is_match(Some(2), is_digit) {
+        if self.peek1_is('.') && self.peek_is_match(Some(1), is_digit) {
             self.advance();
 
             while self.peek1_is_match(is_digit) {
@@ -133,7 +146,7 @@ impl<'a> Lexer<'a> {
     fn string(&mut self) -> Token {
         while !self.is_end() && !self.peek1_is('"') {
             if self.peek1_is('\n') {
-                self.line += 1;
+                self.incr_line();
             }
             self.advance();
         }
@@ -156,33 +169,29 @@ impl<'a> Lexer<'a> {
         self.make_token(ident_type)
     }
 
+    fn fetch(&self, from: usize, to: usize) -> &str {
+        let str = &self.input[from..to];
+        str::from_utf8(&str).unwrap()
+    }
+
     fn ident_type(&mut self) -> TokenType {
-        let str = &self.input[self.start..self.current];
-        let str = str::from_utf8(&str).unwrap();
+        let str = self.fetch(self.start, self.current);
         kw_type_from_str(str)
     }
 
-    fn is_end(&self) -> bool {
-        self.current >= self.len
-    }
-}
-
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token;
-
-    fn next(&mut self) -> Option<Self::Item> {
+    pub fn scan_next(&mut self) -> Token {
         self.skip_whitespaces();
-        println!("Next!!! ");
+
         self.start = self.current;
         if self.is_end() {
-            return Some(self.make_token(TokenEof));
+            return self.make_token(TokenEof);
         }
 
         let ch = self.advance();
-        if is_digit(ch) { return Some(self.number()); }
-        if is_alpha(ch) { return Some(self.ident()); }
+        if is_digit(ch) { return self.number(); }
+        if is_alpha(ch) { return self.ident(); }
 
-        let token = match ch as char {
+        match ch as char {
             '(' => self.make_token(TokenLeftParen),
             ')' => self.make_token(TokenRightParen),
             '{' => self.make_token(TokenLeftBrace),
@@ -224,8 +233,24 @@ impl<'a> Iterator for Lexer<'a> {
             }
             '"' => self.string(),
             _ => self.error_token(format!("unexpected character {ch}").as_ref())
-        };
-
-        Some(token)
+        }
+    }
+    fn is_end(&self) -> bool {
+        self.current >= self.len
     }
 }
+
+impl Iterator for Lexer {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let tok = self.scan_next();
+        if tok.is(TokenEof) {
+            return None;
+        }
+        Some(tok)
+    }
+}
+
+#[cfg(test)]
+mod tests {}
