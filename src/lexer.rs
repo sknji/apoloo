@@ -1,22 +1,25 @@
 use std::str;
+
 use crate::helpers::*;
 use crate::token::*;
 use crate::token::TokenType::*;
 
-pub struct Lexer<'a> {
+pub struct Lexer {
     len: usize,
     start: usize,
     current: usize,
     line: i64,
     col: i64,
-    input: &'a [u8],
+    input: Vec<u8>,
 }
 
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Lexer<'a> {
+impl Lexer {
+    pub fn new(input: String) -> Lexer {
+        let b = input.trim().as_bytes().to_vec();
+        let length = b.len();
         Self {
-            input: input.as_ref(),
-            len: input.len(),
+            input: b,
+            len: length,
             start: 0,
             current: 0,
             line: 1,
@@ -237,7 +240,7 @@ impl<'a> Lexer<'a> {
     }
 }
 
-impl<'a> Iterator for Lexer<'a> {
+impl Iterator for Lexer {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {

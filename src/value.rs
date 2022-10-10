@@ -1,4 +1,4 @@
-use std::ops::{Neg, Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Value(f64);

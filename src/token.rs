@@ -8,7 +8,7 @@ pub struct Token {
     pub(crate) col: i64,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum TokenType {
     // Single-character tokens.
     TokenLeftParen,

@@ -1,26 +1,32 @@
-use crate::Bytecodes;
+use crate::{Bytecodes, debug};
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::token::TokenType::TokenEof;
 
-pub struct Compiler<'a> {
-    parser: Parser<'a>,
+pub struct Compiler {
+    parser: Parser,
 }
 
-impl<'a> Compiler<'a> {
-    pub fn new(input: &'a str) -> Self {
-        let lex = Lexer::new(&input);
-        Self {
-            parser: Parser::new(lex),
-        }
+impl Compiler {
+    pub fn new(input: String) -> Self {
+        Self { parser: Parser::new(Lexer::new(input)) }
+    }
+
+    pub fn end_compiler(&mut self) {
+        self.parser.emit_return();
     }
 
     pub fn compile(&mut self) -> &Bytecodes {
         self.parser.advance();
         self.parser.expression();
         self.parser.consume(TokenEof, "Expect end of expression");
-        self.parser.emit_return();
+        self.end_compiler();
 
-        &self.parser.codegen.bytecodes
+        let bytecodes = &self.parser.codegen.bytecodes;
+        if self.parser.had_error {
+            debug::debug_bytecode(bytecodes, "MAIN");
+        }
+
+        bytecodes
     }
 }

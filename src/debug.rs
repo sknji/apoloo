@@ -1,7 +1,6 @@
 use crate::{Bytecodes, OpCode};
 use crate::value::print_value;
 
-
 pub fn debug_bytecode(bytecodes: &Bytecodes, name: &str) {
     print!("=={}==\n", name);
 

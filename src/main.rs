@@ -2,9 +2,12 @@ use std::{env, io};
 use std::fs::File;
 use std::io::prelude::*;
 use std::process::exit;
-use crate::opcode::OpCode;
+
 use crate::bytecodes::Bytecodes;
-use crate::vm::{InterpretResult};
+use crate::compiler::Compiler;
+use crate::debug::debug_bytecode;
+use crate::opcode::OpCode;
+use crate::vm::{InterpretResult, VM};
 
 mod helpers;
 mod value;
@@ -25,7 +28,8 @@ fn repl() {
 
     let stdin = io::stdin();
     for line in stdin.lock().lines() {
-        vm::interpret(line.unwrap());
+        let str = line.unwrap();
+        interpret(str);
 
         print!("> ");
         io::stdout().flush().unwrap();
@@ -34,7 +38,7 @@ fn repl() {
 
 fn run_file(file_name: &str) {
     let input = read_file(file_name);
-    let result = vm::interpret(input);
+    let result = interpret(input);
     match result {
         InterpretResult::InterpretOk => {}
         InterpretResult::InterpretCompileError => { exit(65) }
@@ -48,6 +52,19 @@ fn read_file(file_name: &str) -> String {
     file.read_to_string(&mut data).unwrap();
 
     data
+}
+
+fn interpret(input: String) -> InterpretResult {
+    let mut compiler = Compiler::new(input);
+
+    let code = compiler.compile();
+
+    let mut machine = VM::new(code);
+    machine.interpret();
+
+    machine.free();
+
+    InterpretResult::InterpretOk
 }
 
 fn main() {

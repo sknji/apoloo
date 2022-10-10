@@ -6,7 +6,7 @@ use crate::value::{print_value, Value};
 pub const STACK_MAX: usize = 256;
 
 pub struct VM<'b> {
-    code: &'b  Bytecodes,
+    code: &'b Bytecodes,
     // instruction pointer
     ip: usize,
     // stack pointer
@@ -105,18 +105,4 @@ impl<'b> VM<'b> {
     pub fn is_end(&self) -> bool {
         self.ip >= self.code.code.len()
     }
-}
-
-pub fn interpret(input: String) -> InterpretResult {
-    let mut compiler = Compiler::new(&input);
-
-    let code = compiler.compile();
-
-    debug_bytecode(code, "MAIN");
-
-    let mut machine = VM::new(code);
-    machine.interpret();
-
-    machine.free();
-    InterpretResult::InterpretOk
 }
