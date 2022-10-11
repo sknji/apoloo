@@ -14,6 +14,14 @@ impl Codegen {
         self.bytecodes.write(b)
     }
 
+    pub(crate) fn emit_bytes(&mut self, bytes: &[u8]) -> usize {
+        let mut size: usize = 0;
+        for b in bytes {
+            size = self.bytecodes.write(*b)
+        }
+        size
+    }
+
     pub(crate) fn emit_return(&mut self) -> usize {
         self.bytecodes.write(OpReturn.into())
     }
