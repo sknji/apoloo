@@ -1,6 +1,6 @@
-use crate::value::Value;
+use crate::value::{Value, ValueRepr};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Bytecodes {
     pub(crate) code_count: usize,
     pub(crate) code_capacity: usize,
@@ -37,7 +37,7 @@ impl Bytecodes {
     }
 
     pub(crate) fn add_const_val(&mut self, val: f64) -> usize {
-        self.add_const(Value::new(val))
+        self.add_const(Value(ValueRepr::Number(val)))
     }
 
     pub(crate) fn add_const(&mut self, value: Value) -> usize {
@@ -48,7 +48,7 @@ impl Bytecodes {
 
     pub(crate) fn free(&mut self) {
         self.code.resize(0, 0);
-        self.values.resize(0, Value::new(0.0));
+        self.values.resize(0, Value::new());
         self.code_count = 0;
         self.code_capacity = 0;
         self.values_capacity = 0;

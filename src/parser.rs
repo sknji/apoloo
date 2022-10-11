@@ -10,7 +10,7 @@ use crate::token::{Token, TokenType};
 use crate::token::TokenType::*;
 
 pub(crate) struct Parser {
-    lex: Lexer,
+    pub(crate) lex: Lexer,
     pub(crate) codegen: Codegen,
     curr_tok: Option<Token>,
     prev_tok: Option<Token>,
@@ -104,14 +104,26 @@ impl<'a> Parser {
         self.codegen.emit_constant(value);
     }
 
+    pub(crate) fn literal(&mut self) {
+        let prev_tok_type = self.prev_tok_type();
+        match prev_tok_type {
+            TokenFalse => self.codegen.emit_byte(OpFalse.into()),
+            TokenTrue => self.codegen.emit_byte(OpTrue.into()),
+            TokenNil => self.codegen.emit_byte(OpNil.into()),
+            _ => return,
+        };
+    }
+
     pub(crate) fn unary(&mut self) {
         let prev_tok_type = self.prev_tok_type();
 
         self.parse(&PrecedenceUnary);
 
-        if prev_tok_type.is(&TokenMinus) {
-            self.codegen.emit_byte(OpNegate.into());
-        }
+        match prev_tok_type {
+            TokenMinus => self.codegen.emit_byte(OpNegate.into()),
+            TokenBang => self.codegen.emit_byte(OpNot.into()),
+            _ => return,
+        };
     }
 
     pub(crate) fn binary(&mut self) {
@@ -119,13 +131,14 @@ impl<'a> Parser {
         let rule = self.get_rule(&prev_tok_type);
 
         let precedence = &rule.precedence.add(1);
+
         self.parse(precedence);
 
         match prev_tok_type {
-            TokenType::TokenPlus => { self.codegen.emit_byte(OpAdd.into()); }
-            TokenType::TokenMinus => { self.codegen.emit_byte(OpSubtract.into()); }
-            TokenType::TokenStar => { self.codegen.emit_byte(OpMultiple.into()); }
-            TokenType::TokenSlash => { self.codegen.emit_byte(OpDivide.into()); }
+            TokenPlus => { self.codegen.emit_byte(OpAdd.into()); }
+            TokenMinus => { self.codegen.emit_byte(OpSubtract.into()); }
+            TokenStar => { self.codegen.emit_byte(OpMultiple.into()); }
+            TokenSlash => { self.codegen.emit_byte(OpDivide.into()); }
             _ => return,
         }
     }
@@ -191,3 +204,7 @@ impl<'a> Parser {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {}

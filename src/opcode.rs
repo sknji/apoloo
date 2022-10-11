@@ -8,6 +8,10 @@ pub enum OpCode {
     OpSubtract = 4,
     OpMultiple = 5,
     OpDivide = 6,
+    OpNil = 7,
+    OpTrue = 8,
+    OpFalse = 9,
+    OpNot = 10,
 
     OpUnKnown = 99,
 }
@@ -22,6 +26,10 @@ impl From<u8> for OpCode {
             4 => OpCode::OpSubtract,
             5 => OpCode::OpMultiple,
             6 => OpCode::OpDivide,
+            7 => OpCode::OpNil,
+            8 => OpCode::OpTrue,
+            9 => OpCode::OpFalse,
+            10 => OpCode::OpNot,
             _ => OpCode::OpUnKnown,
         }
     }
@@ -39,6 +47,10 @@ impl From<OpCode> for u8 {
             OpCode::OpSubtract => 4,
             OpCode::OpMultiple => 5,
             OpCode::OpDivide => 6,
+            OpCode::OpNil => 7,
+            OpCode::OpTrue => 8,
+            OpCode::OpFalse => 9,
+            OpCode::OpNot => 10,
         }
     }
 }

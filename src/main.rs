@@ -59,6 +59,8 @@ fn interpret(input: String) -> InterpretResult {
 
     let code = compiler.compile();
 
+    // debug_bytecode(code, "MAIN");
+
     let mut machine = VM::new(code);
     machine.interpret();
 

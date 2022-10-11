@@ -1,5 +1,4 @@
 use crate::{Bytecodes, OpCode};
-use crate::value::print_value;
 
 pub fn debug_bytecode(bytecodes: &Bytecodes, name: &str) {
     print!("=={}==\n", name);
@@ -33,6 +32,10 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpSubtract => simple_instruction("OP_SUBTRACT", offset),
                 OpCode::OpMultiple => simple_instruction("OP_MULTIPLY", offset),
                 OpCode::OpDivide => simple_instruction("OP_DIVIDE", offset),
+                OpCode::OpNil => simple_instruction("OP_NIL", offset),
+                OpCode::OpTrue => simple_instruction("OP_TRUE", offset),
+                OpCode::OpFalse => simple_instruction("OP_FALSE", offset),
+                OpCode::OpNot => simple_instruction("OP_NOT", offset),
                 OpCode::OpUnKnown => {
                     println!("Unknown opcode {:?}", op);
                     offset + 1
@@ -67,7 +70,7 @@ fn constant_instruction(name: &str, bytecodes: &Bytecodes, offset: usize) -> usi
     };
 
     match bytecodes.values.get(constant as usize) {
-        Some(val) => print_value(val),
+        Some(val) => val.print(),
         None => println!("Unknown constant value"),
     }
 

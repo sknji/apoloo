@@ -4,6 +4,7 @@ use crate::helpers::*;
 use crate::token::*;
 use crate::token::TokenType::*;
 
+#[derive(Debug, Clone)]
 pub struct Lexer {
     len: usize,
     start: usize,
@@ -117,7 +118,7 @@ impl Lexer {
                     self.incr_line();
                     self.advance();
                 }
-                '/' if self.peek1_is('/') => {
+                '/' if self.peek_is('/', Some(2)) => {
                     while !self.peek1_is('\n') && !self.is_end() {
                         self.advance();
                     }

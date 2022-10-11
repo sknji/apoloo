@@ -1,7 +1,7 @@
 use crate::{Bytecodes, OpCode};
 use crate::compiler::Compiler;
 use crate::debug::debug_bytecode;
-use crate::value::{print_value, Value};
+use crate::value::{Value, ValueRepr};
 
 pub const STACK_MAX: usize = 256;
 
@@ -35,8 +35,7 @@ impl<'b> VM<'b> {
 
             match op {
                 OpCode::OpReturn => {
-                    print_value(&self.pop());
-                    println!();
+                    let _ = &self.pop().print();
                     return InterpretResult::InterpretOk;
                 }
                 OpCode::OpConstant => {
@@ -66,6 +65,13 @@ impl<'b> VM<'b> {
                     let r = self.pop();
                     let l = self.pop();
                     self.push(l / r)
+                }
+                OpCode::OpNil => self.push(Value(ValueRepr::Nil())),
+                OpCode::OpFalse => self.push(Value(ValueRepr::Boolean(false))),
+                OpCode::OpTrue => self.push(Value(ValueRepr::Boolean(true))),
+                OpCode::OpNot => {
+                    let val = self.pop();
+                    self.push(Value(ValueRepr::Boolean(self.is_falsey(val))))
                 }
                 OpCode::OpUnKnown => {}
             }
@@ -100,6 +106,14 @@ impl<'b> VM<'b> {
 
     pub fn free(&mut self) {
         // TODO:
+    }
+
+    pub fn is_falsey(&self, value: Value) -> bool {
+        match value.0 {
+            ValueRepr::Nil() => true,
+            ValueRepr::Boolean(v) => !v,
+            _ => false,
+        }
     }
 
     pub fn is_end(&self) -> bool {
