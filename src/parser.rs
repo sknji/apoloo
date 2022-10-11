@@ -135,12 +135,18 @@ impl<'a> Parser {
         self.parse(precedence);
 
         match prev_tok_type {
-            TokenPlus => { self.codegen.emit_byte(OpAdd.into()); }
-            TokenMinus => { self.codegen.emit_byte(OpSubtract.into()); }
-            TokenStar => { self.codegen.emit_byte(OpMultiple.into()); }
-            TokenSlash => { self.codegen.emit_byte(OpDivide.into()); }
+            TokenPlus => self.codegen.emit_byte(OpAdd.into()),
+            TokenMinus => self.codegen.emit_byte(OpSubtract.into()),
+            TokenStar => self.codegen.emit_byte(OpMultiple.into()),
+            TokenSlash => self.codegen.emit_byte(OpDivide.into()),
+            TokenBangEqual => self.codegen.emit_bytes(&[OpEqual.into(), OpNot.into()]),
+            TokenEqualEqual => self.codegen.emit_byte(OpEqual.into()),
+            TokenGreater => self.codegen.emit_byte(OpGreater.into()),
+            TokenGreaterEqual => self.codegen.emit_bytes(&[OpLess.into(), OpNot.into()]),
+            TokenLess => self.codegen.emit_byte(OpLess.into()),
+            TokenLessEqual => self.codegen.emit_byte(OpDivide.into()),
             _ => return,
-        }
+        };
     }
 
     pub(crate) fn error_at_curr(&mut self, msg: &str) {

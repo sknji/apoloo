@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::fmt;
 use std::fmt::Formatter;
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -92,6 +93,34 @@ impl Div for Value {
                 Value(ValueRepr::Number(l / r))
             }
             _ => Value(ValueRepr::Nil())
+        }
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (&self.0, &other.0) {
+            (ValueRepr::Number(l), ValueRepr::Number(r)) => l == r,
+            (ValueRepr::Boolean(l), ValueRepr::Boolean(r)) => l == r,
+            (ValueRepr::Nil(), ValueRepr::Nil()) => true,
+            _ => false,
+        }
+    }
+}
+
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (&self.0, &other.0) {
+            (ValueRepr::Number(l), ValueRepr::Number(r)) => {
+                if l < r {
+                    return Some(Ordering::Less);
+                } else if l > r {
+                    return Some(Ordering::Greater);
+                }
+
+                return Some(Ordering::Equal);
+            }
+            _ => None,
         }
     }
 }

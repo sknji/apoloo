@@ -73,6 +73,21 @@ impl<'b> VM<'b> {
                     let val = self.pop();
                     self.push(Value(ValueRepr::Boolean(self.is_falsey(val))))
                 }
+                OpCode::OpEqual => {
+                    let r = self.pop();
+                    let l = self.pop();
+                    self.push(Value(ValueRepr::Boolean(l == r)))
+                }
+                OpCode::OpLess => {
+                    let r = self.pop();
+                    let l = self.pop();
+                    self.push(Value(ValueRepr::Boolean(l < r)))
+                }
+                OpCode::OpGreater => {
+                    let r = self.pop();
+                    let l = self.pop();
+                    self.push(Value(ValueRepr::Boolean(l > r)))
+                }
                 OpCode::OpUnKnown => {}
             }
         }

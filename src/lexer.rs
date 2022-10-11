@@ -54,12 +54,12 @@ impl Lexer {
         *self.input.get(self.current - 1).unwrap() as char
     }
 
-    fn matches(&mut self, ch: char) -> bool {
+    fn next_matches(&mut self, ch: char) -> bool {
         if self.is_end() {
             return false;
         }
 
-        let next = *self.input.get(self.current + 1).unwrap();
+        let next = *self.input.get(self.current).unwrap();
         if ch != (next as char) {
             return false;
         }
@@ -205,28 +205,28 @@ impl Lexer {
             '/' => self.make_token(TokenSlash),
             '*' => self.make_token(TokenStar),
             '!' => {
-                let tok_type = match self.matches('=') {
+                let tok_type = match self.next_matches('=') {
                     true => TokenBangEqual,
                     false => TokenBang,
                 };
                 self.make_token(tok_type)
             }
             '=' => {
-                let tok_type = match self.matches('=') {
+                let tok_type = match self.next_matches('=') {
                     true => TokenEqualEqual,
                     false => TokenEqual,
                 };
                 self.make_token(tok_type)
             }
             '<' => {
-                let tok_type = match self.matches('=') {
+                let tok_type = match self.next_matches('=') {
                     true => TokenLessEqual,
                     false => TokenEqual,
                 };
                 self.make_token(tok_type)
             }
             '>' => {
-                let tok_type = match self.matches('=') {
+                let tok_type = match self.next_matches('=') {
                     true => TokenGreaterEqual,
                     false => TokenGreater,
                 };
