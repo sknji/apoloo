@@ -39,6 +39,7 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpEqual => simple_instruction("OP_EQUAL", offset),
                 OpCode::OpGreater => simple_instruction("OP_GREATER", offset),
                 OpCode::OpLess => simple_instruction("OP_LESS", offset),
+                OpCode::OpPrint => simple_instruction("OP_PRINT", offset),
                 OpCode::OpUnKnown => {
                     println!("Unknown opcode {:?}", op);
                     offset + 1

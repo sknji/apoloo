@@ -34,6 +34,10 @@ impl<'b> VM<'b> {
             let op: OpCode = self.read_opcode();
 
             match op {
+                OpCode::OpPrint => {
+                    let _ = &self.pop().print();
+                    return InterpretResult::InterpretOk;
+                }
                 OpCode::OpReturn => {
                     let _ = &self.pop().print();
                     return InterpretResult::InterpretOk;
@@ -70,8 +74,8 @@ impl<'b> VM<'b> {
                 OpCode::OpFalse => self.push(Value(ValueRepr::Boolean(false))),
                 OpCode::OpTrue => self.push(Value(ValueRepr::Boolean(true))),
                 OpCode::OpNot => {
-                    let val = self.pop();
-                    self.push(Value(ValueRepr::Boolean(self.is_falsey(val))))
+                    let value = self.pop();
+                    self.push(Value(ValueRepr::Boolean(self.is_falsey(value))))
                 }
                 OpCode::OpEqual => {
                     let r = self.pop();
@@ -101,6 +105,10 @@ impl<'b> VM<'b> {
     fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack.pop().unwrap()
+    }
+
+    fn peek(&self, distance: usize) -> &Value {
+        self.stack.get(distance).unwrap()
     }
 
     fn read_byte(&mut self) -> u8 {

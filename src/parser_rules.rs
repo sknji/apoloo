@@ -15,15 +15,16 @@ pub(crate) struct ParseRule {
 #[derive(Clone, Eq, PartialEq, PartialOrd, Hash, Debug)]
 pub(crate) enum ParsePrecedence {
     PrecedenceNone = 1,
-    PrecedenceAssignment = 2,
-    PrecedenceOr = 3,
-    PrecedenceAnd = 4,
-    PrecedenceEquality = 5,
-    PrecedenceComparison = 6,
-    PrecedenceTerm = 7,
-    PrecedenceFactor = 8,
-    PrecedenceUnary = 9,
-    PrecedenceCall = 10,
+    PrecedenceAssignment = 2 /* = */,
+    PrecedenceOr = 3 /* or */,
+    PrecedenceAnd = 4 /* and */,
+    PrecedenceEquality = 5 /* ==, != */,
+    PrecedenceComparison = 6 /* <, >, <=, >= */,
+    PrecedenceTerm = 7 /* +, - */,
+    PrecedenceFactor = 8 /* *, / */,
+    PrecedenceUnary = 9 /* !, - */,
+    PrecedenceCall = 10 /* ., () */,
+
     PrecedencePrimary = 11,
 }
 
@@ -103,7 +104,7 @@ impl Parser {
         h.insert(TokenLess, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
         h.insert(TokenLessEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
         h.insert(TokenIdentifier, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenString, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
+        h.insert(TokenString, ParseRule { prefix: Some(Parser::string), infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenNumber, ParseRule { prefix: Some(Parser::number), infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenAnd, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenClass, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });

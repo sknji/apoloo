@@ -117,7 +117,14 @@ impl PartialOrd for Value {
                 } else if l > r {
                     return Some(Ordering::Greater);
                 }
-
+                return Some(Ordering::Equal);
+            }
+            (ValueRepr::String(l), ValueRepr::String(r)) => {
+                if l < r {
+                    return Some(Ordering::Less);
+                } else if l > r {
+                    return Some(Ordering::Greater);
+                }
                 return Some(Ordering::Equal);
             }
             _ => None,

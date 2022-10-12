@@ -101,7 +101,17 @@ impl<'a> Parser {
             }
         };
 
-        self.codegen.emit_constant(value);
+        self.codegen.emit_const_f64(value);
+    }
+    pub(crate) fn string(&mut self) {
+        let value = self.prev_tok.as_ref();
+        let value = match value {
+            None => "",
+            Some(val) => val.raw
+                .trim_matches('"'),
+        };
+
+        self.codegen.emit_const_string(value.to_owned());
     }
 
     pub(crate) fn literal(&mut self) {
@@ -110,6 +120,7 @@ impl<'a> Parser {
             TokenFalse => self.codegen.emit_byte(OpFalse.into()),
             TokenTrue => self.codegen.emit_byte(OpTrue.into()),
             TokenNil => self.codegen.emit_byte(OpNil.into()),
+            TokenPrint => self.codegen.emit_byte(OpPrint.into()),
             _ => return,
         };
     }

@@ -1,5 +1,6 @@
 use crate::Bytecodes;
 use crate::OpCode::{OpConstant, OpReturn};
+use crate::value::{Value, ValueRepr};
 
 pub(crate) struct Codegen {
     pub(crate) bytecodes: Bytecodes,
@@ -26,8 +27,14 @@ impl Codegen {
         self.bytecodes.write(OpReturn.into())
     }
 
-    pub(crate) fn emit_constant(&mut self, value: f64) -> usize {
+    pub(crate) fn emit_const_f64(&mut self, value: f64) -> usize {
         let addr = self.bytecodes.add_const_val(value);
+        // TODO: add max constant check
+        self.bytecodes.write2(OpConstant.into(), addr as u8)
+    }
+
+    pub(crate) fn emit_const_string(&mut self, str: String) -> usize {
+        let addr = self.bytecodes.add_const(Value(ValueRepr::String(str)));
         // TODO: add max constant check
         self.bytecodes.write2(OpConstant.into(), addr as u8)
     }
