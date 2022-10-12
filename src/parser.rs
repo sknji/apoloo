@@ -34,8 +34,8 @@ impl<'a> Parser {
         p
     }
 
-    fn curr_is(&self, tok_type: TokenType) -> bool {
-        self.curr_tok_type().is(&tok_type)
+    fn curr_is(&self, tok_type: &TokenType) -> bool {
+        self.curr_tok_type().is(tok_type)
     }
 
     pub(crate) fn advance(&mut self) {
@@ -57,13 +57,22 @@ impl<'a> Parser {
         self.codegen.emit_return()
     }
 
-    pub(crate) fn consume(&mut self, tok_type: TokenType, err_msg: &str) {
+    pub(crate) fn consume(&mut self, tok_type: &TokenType, err_msg: &str) {
         if self.curr_is(tok_type) {
             self.advance();
             return;
         }
 
         self.error_at_curr(err_msg);
+    }
+
+    pub(crate) fn match_advance(&mut self, tok_type: &TokenType) -> bool {
+        if !self.curr_is(tok_type) {
+            return false;
+        }
+        self.advance();
+
+        true
     }
 
     pub(crate) fn prev_tok_type(&self) -> TokenType {
@@ -85,11 +94,48 @@ impl<'a> Parser {
 
     pub(crate) fn grouping(&mut self) {
         self.expression();
-        self.consume(TokenRightParen, "Expect ')' after expression.")
+        self.consume(&TokenRightParen, "Expect ')' after expression.")
     }
 
     pub(crate) fn expression(&mut self) {
         self.parse(&PrecedenceAssignment);
+    }
+
+    pub(crate) fn var_declaration(&mut self) {
+        // TODO:
+    }
+
+    pub(crate) fn expression_statement(&mut self) {
+        self.expression();
+        self.consume(&TokenSemicolon, "Expect ';' after value.");
+        self.codegen.emit_byte(OpPop.into());
+    }
+
+    pub(crate) fn print_statement(&mut self) {
+        self.expression();
+        self.consume(&TokenSemicolon, "Expect ';' after value.");
+        self.codegen.emit_byte(OpPrint.into());
+    }
+
+    pub(crate) fn declaration(&mut self) {
+        let cur_tok_type = self.curr_tok_type();
+        match cur_tok_type {
+            TokenVar => {}
+            _ => {
+                self.statement();
+            }
+        }
+    }
+
+    pub(crate) fn statement(&mut self) {
+        let cur_tok_type = self.curr_tok_type();
+        match cur_tok_type {
+            TokenPrint => {
+                self.advance();
+                self.print_statement()
+            }
+            _ => self.expression_statement()
+        }
     }
 
     pub(crate) fn number(&mut self) {

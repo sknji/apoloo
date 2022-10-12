@@ -18,8 +18,18 @@ impl Compiler {
 
     pub fn compile(&mut self) -> &Bytecodes {
         self.parser.advance();
-        self.parser.expression();
-        self.parser.consume(TokenEof, "Expect end of expression");
+
+        loop {
+            let tok = self.parser.curr_tok_type();
+            if tok.is(&TokenEof) {
+                break;
+            }
+
+            self.parser.declaration();
+        }
+
+        self.parser.consume(&TokenEof, "Expect end of expression");
+
         self.end_compiler();
 
         let bytecodes = &self.parser.codegen.bytecodes;

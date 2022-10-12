@@ -34,12 +34,13 @@ impl<'b> VM<'b> {
             let op: OpCode = self.read_opcode();
 
             match op {
+                OpCode::OpPop => {
+                    self.pop();
+                },
                 OpCode::OpPrint => {
                     let _ = &self.pop().print();
-                    return InterpretResult::InterpretOk;
                 }
                 OpCode::OpReturn => {
-                    let _ = &self.pop().print();
                     return InterpretResult::InterpretOk;
                 }
                 OpCode::OpConstant => {
