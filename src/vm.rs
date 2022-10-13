@@ -34,9 +34,12 @@ impl<'b> VM<'b> {
             let op: OpCode = self.read_opcode();
 
             match op {
+                OpCode::OpDefineGlobal => {
+                    self.pop();//TODO:(fixme)
+                }
                 OpCode::OpPop => {
                     self.pop();
-                },
+                }
                 OpCode::OpPrint => {
                     let _ = &self.pop().print();
                 }

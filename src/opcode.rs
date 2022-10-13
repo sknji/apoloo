@@ -17,6 +17,7 @@ pub enum OpCode {
     OpLess = 13,
     OpPrint = 14,
     OpPop = 15,
+    OpDefineGlobal = 16,
 
     OpUnKnown = 99,
 }
@@ -40,6 +41,7 @@ impl From<u8> for OpCode {
             13 => OpCode::OpLess,
             14 => OpCode::OpPrint,
             15 => OpCode::OpPop,
+            16 => OpCode::OpDefineGlobal,
             _ => OpCode::OpUnKnown,
         }
     }
@@ -66,6 +68,7 @@ impl From<OpCode> for u8 {
             OpCode::OpLess => 13,
             OpCode::OpPrint => 14,
             OpCode::OpPop => 15,
+            OpCode::OpDefineGlobal => 16,
         }
     }
 }

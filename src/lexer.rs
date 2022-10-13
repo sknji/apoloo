@@ -18,14 +18,7 @@ impl Lexer {
     pub fn new(input: String) -> Lexer {
         let b = input.trim().as_bytes().to_vec();
         let length = b.len();
-        Self {
-            input: b,
-            len: length,
-            start: 0,
-            current: 0,
-            line: 1,
-            col: 0,
-        }
+        Self { input: b, len: length, start: 0, current: 0, line: 1, col: 0 }
     }
 
     fn make_token(&mut self, type_: TokenType) -> Token {

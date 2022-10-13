@@ -102,7 +102,16 @@ impl<'a> Parser {
     }
 
     pub(crate) fn var_declaration(&mut self) {
-        // TODO:
+        let global = self.parse_variable("Expect variable name");
+        if self.curr_is(&TokenEqual) {
+            self.expression();
+        } else {
+            self.codegen.emit_byte(OpNil.into());
+        }
+
+        self.consume(&TokenSemicolon, "Expect ';' after variable declaration.");
+
+        self.define_var(global as u8);
     }
 
     pub(crate) fn expression_statement(&mut self) {
@@ -120,7 +129,10 @@ impl<'a> Parser {
     pub(crate) fn declaration(&mut self) {
         let cur_tok_type = self.curr_tok_type();
         match cur_tok_type {
-            TokenVar => {}
+            TokenVar => {
+                self.advance();
+                self.var_declaration();
+            }
             _ => {
                 self.statement();
             }
@@ -265,6 +277,24 @@ impl<'a> Parser {
                 Some(i) => { i(self) }
             }
         }
+    }
+
+    pub(crate) fn parse_variable(&mut self, msg: &str) -> usize {
+        self.consume(&TokenIdentifier, msg);
+        self.ident_const()
+    }
+
+    pub(crate) fn ident_const(&mut self) -> usize {
+        let value = match self.prev_tok.as_ref() {
+            None => "",
+            Some(val) => &val.raw,
+        };
+
+        self.codegen.emit_const_string(value.to_owned())
+    }
+
+    pub(crate) fn define_var(&mut self, global: u8) {
+        self.codegen.emit_bytes(&[OpDefineGlobal.into(), global]);
     }
 }
 
