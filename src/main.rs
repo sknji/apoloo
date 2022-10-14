@@ -33,6 +33,7 @@ fn repl() {
     for line in stdin.lock().lines() {
         let str = line.unwrap();
         let code = compile(str);
+
         machine.interpret(code);
 
         print!("> ");

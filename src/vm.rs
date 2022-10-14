@@ -27,11 +27,22 @@ pub enum InterpretResult {
 
 impl VM {
     pub fn new() -> VM {
-        Self { code: Default::default(), ip: 0, stack: Vec::new(), stack_top: 0, globals: HashMap::new() }
+        Self {
+            code: Default::default(),
+            ip: 0,
+            stack: Vec::new(),
+            stack_top: 0,
+            globals: HashMap::new(),
+        }
+    }
+
+    fn reset(&mut self) {
+        self.ip = 0;
     }
 
     pub fn interpret(&mut self, code: Bytecodes) -> InterpretResult {
         self.code = code;
+        self.reset();
         self.run()
     }
 
