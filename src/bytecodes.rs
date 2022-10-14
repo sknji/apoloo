@@ -55,3 +55,9 @@ impl Bytecodes {
         self.values_count = 0;
     }
 }
+
+impl Default for Bytecodes {
+    fn default() -> Bytecodes {
+        Bytecodes::new()
+    }
+}

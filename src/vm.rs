@@ -1,17 +1,22 @@
+use std::collections::HashMap;
 use crate::{Bytecodes, OpCode};
 use crate::compiler::Compiler;
 use crate::debug::debug_bytecode;
+use crate::InterpretResult::InterpretRuntimeError;
 use crate::value::{Value, ValueRepr};
 
 pub const STACK_MAX: usize = 256;
 
-pub struct VM<'b> {
-    code: &'b Bytecodes,
+pub struct VM {
+    code: Bytecodes,
     // instruction pointer
     ip: usize,
     // stack pointer
     stack_top: usize,
     stack: Vec<Value>,
+
+    // global variable store
+    globals: HashMap<String, Value>,
 }
 
 pub enum InterpretResult {
@@ -20,82 +25,129 @@ pub enum InterpretResult {
     InterpretRuntimeError,
 }
 
-impl<'b> VM<'b> {
-    pub fn new(code: &'b Bytecodes) -> VM {
-        Self { code, ip: 0, stack: Vec::new(), stack_top: 0 }
+impl VM {
+    pub fn new() -> VM {
+        Self { code: Default::default(), ip: 0, stack: Vec::new(), stack_top: 0, globals: HashMap::new() }
     }
 
-    pub fn interpret(&mut self) -> InterpretResult {
+    pub fn interpret(&mut self, code: Bytecodes) -> InterpretResult {
+        self.code = code;
+        self.run()
+    }
+
+    fn run(&mut self) -> InterpretResult {
         loop {
             if self.is_end() {
-                return InterpretResult::InterpretRuntimeError;
+                return InterpretRuntimeError;
             }
 
             let op: OpCode = self.read_opcode();
 
-            match op {
-                OpCode::OpPop => {
-                    self.pop();
-                },
-                OpCode::OpPrint => {
-                    let _ = &self.pop().print();
-                }
-                OpCode::OpReturn => {
-                    return InterpretResult::InterpretOk;
-                }
-                OpCode::OpConstant => {
-                    let constant = self.read_constant();
-                    self.push(constant)
-                }
-                OpCode::OpNegate => {
-                    let val = -self.pop();
-                    self.push(val)
-                }
-                OpCode::OpAdd => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(l + r)
-                }
-                OpCode::OpSubtract => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(l - r)
-                }
-                OpCode::OpMultiple => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(l * r)
-                }
-                OpCode::OpDivide => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(l / r)
-                }
-                OpCode::OpNil => self.push(Value(ValueRepr::Nil())),
-                OpCode::OpFalse => self.push(Value(ValueRepr::Boolean(false))),
-                OpCode::OpTrue => self.push(Value(ValueRepr::Boolean(true))),
-                OpCode::OpNot => {
-                    let value = self.pop();
-                    self.push(Value(ValueRepr::Boolean(self.is_falsey(value))))
-                }
-                OpCode::OpEqual => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(Value(ValueRepr::Boolean(l == r)))
-                }
-                OpCode::OpLess => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(Value(ValueRepr::Boolean(l < r)))
-                }
-                OpCode::OpGreater => {
-                    let r = self.pop();
-                    let l = self.pop();
-                    self.push(Value(ValueRepr::Boolean(l > r)))
-                }
-                OpCode::OpUnKnown => {}
+            self.print_stack(&op, "BEFORE");
+            match self.process(&op) {
+                None => {}
+                Some(e) => return e,
             }
+            self.print_stack(&op, "AFTER");
         }
+    }
+
+    fn process(&mut self, op: &OpCode) -> Option<InterpretResult> {
+        match op {
+            OpCode::OpSetGlobal => {
+                let key = self.read_const_str();
+                match self.globals.contains_key(&key) {
+                    false => {
+                        eprintln!("Undefined variable '{}'.", &key);
+                        return Some(InterpretRuntimeError);
+                    }
+                    true => {
+                        self.globals.insert(key.into(), self.peek(0).clone());
+                    }
+                }
+            }
+            OpCode::OpGetGlobal => {
+                let key = self.read_const_str();
+                match self.globals.get(&key) {
+                    None => {
+                        eprintln!("Undefined variable '{}'.", &key);
+                        return Some(InterpretRuntimeError);
+                    }
+                    Some(v) => {
+                        self.push(v.clone().into())
+                    }
+                }
+            }
+            OpCode::OpDefineGlobal => {
+                let key = self.read_const_str();
+                let val = self.peek(0).clone();
+                self.globals.insert(key, val);
+                self.pop();
+            }
+            OpCode::OpPop => {
+                self.pop();
+            }
+            OpCode::OpPrint => {
+                let _ = &self.pop().print();
+            }
+            OpCode::OpReturn => {
+                return Some(InterpretResult::InterpretOk);
+            }
+            OpCode::OpConstant => {
+                let constant = self.read_const();
+                self.push(constant)
+            }
+            OpCode::OpNegate => {
+                let val = -self.pop();
+                self.push(val)
+            }
+            OpCode::OpAdd => {
+                let r = self.pop();
+                let l = self.pop();
+                eprintln!("ADD: {}, {}", &l, &r);
+                self.push(l + r)
+            }
+            OpCode::OpSubtract => {
+                let r = self.pop();
+                let l = self.pop();
+                self.push(l - r)
+            }
+            OpCode::OpMultiple => {
+                let r = self.pop();
+                let l = self.pop();
+                self.push(l * r)
+            }
+            OpCode::OpDivide => {
+                let r = self.pop();
+                let l = self.pop();
+                self.push(l / r)
+            }
+            OpCode::OpNil => self.push(Value(ValueRepr::Nil())),
+            OpCode::OpFalse => self.push(Value(ValueRepr::Boolean(false))),
+            OpCode::OpTrue => self.push(Value(ValueRepr::Boolean(true))),
+            OpCode::OpNot => {
+                let value = self.pop();
+                self.push(Value(ValueRepr::Boolean(self.is_falsey(value))))
+            }
+            OpCode::OpEqual => {
+                let r = self.pop();
+                let l = self.pop();
+                self.push(Value(ValueRepr::Boolean(l == r)))
+            }
+            OpCode::OpLess => {
+                let r = self.pop();
+                let l = self.pop();
+                self.push(Value(ValueRepr::Boolean(l < r)))
+            }
+            OpCode::OpGreater => {
+                let r = self.pop();
+                let l = self.pop();
+                self.push(Value(ValueRepr::Boolean(l > r)))
+            }
+            OpCode::OpUnKnown => {}
+        };
+
+        None
     }
 
     fn push(&mut self, value: Value) {
@@ -109,7 +161,7 @@ impl<'b> VM<'b> {
     }
 
     fn peek(&self, distance: usize) -> &Value {
-        self.stack.get(distance).unwrap()
+        self.stack.get(self.stack_top - 1 - distance).unwrap()
     }
 
     fn read_byte(&mut self) -> u8 {
@@ -123,9 +175,17 @@ impl<'b> VM<'b> {
         self.read_byte().into()
     }
 
-    fn read_constant(&mut self) -> Value {
+    fn read_const(&mut self) -> Value {
         let idx = self.read_byte();
         self.code.values.get(idx as usize).unwrap().clone()
+    }
+
+    fn read_const_str(&mut self) -> String {
+        let constant = self.read_const();
+        match constant.0 {
+            ValueRepr::String(v) => { v }
+            _ => "".to_string()
+        }
     }
 
     pub fn free(&mut self) {
@@ -142,5 +202,13 @@ impl<'b> VM<'b> {
 
     pub fn is_end(&self) -> bool {
         self.ip >= self.code.code.len()
+    }
+
+    fn print_stack(&self, op: &OpCode, action: &str) {
+        eprintln!("OP: {} {}", &op, action);
+        for (k, v) in self.stack.iter().enumerate() {
+            eprintln!("\tStack {}: '{}'", k, v);
+        }
+        eprintln!()
     }
 }

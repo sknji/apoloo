@@ -102,7 +102,16 @@ impl<'a> Parser {
     }
 
     pub(crate) fn var_declaration(&mut self) {
-        // TODO:
+        let global = self.parse_variable("Expect variable name");
+        if self.match_advance(&TokenEqual) {
+            self.expression();
+        } else {
+            self.codegen.emit_byte(OpNil.into());
+        }
+
+        self.consume(&TokenSemicolon, "Expect ';' after variable declaration.");
+
+        self.define_var(global as u8);
     }
 
     pub(crate) fn expression_statement(&mut self) {
@@ -118,23 +127,18 @@ impl<'a> Parser {
     }
 
     pub(crate) fn declaration(&mut self) {
-        let cur_tok_type = self.curr_tok_type();
-        match cur_tok_type {
-            TokenVar => {}
-            _ => {
-                self.statement();
-            }
+        if self.match_advance(&TokenVar) {
+            self.var_declaration();
+        } else {
+            self.statement();
         }
     }
 
     pub(crate) fn statement(&mut self) {
-        let cur_tok_type = self.curr_tok_type();
-        match cur_tok_type {
-            TokenPrint => {
-                self.advance();
-                self.print_statement()
-            }
-            _ => self.expression_statement()
+        if self.match_advance(&TokenPrint) {
+            self.print_statement();
+        } else {
+            self.expression_statement();
         }
     }
 
@@ -149,6 +153,7 @@ impl<'a> Parser {
 
         self.codegen.emit_const_f64(value);
     }
+
     pub(crate) fn string(&mut self) {
         let value = self.prev_tok.as_ref();
         let value = match value {
@@ -158,6 +163,23 @@ impl<'a> Parser {
         };
 
         self.codegen.emit_const_string(value.to_owned());
+    }
+
+    pub(crate) fn named_variable(&mut self) {
+        let arg = self.ident_const() as u8;
+        match self.match_advance(&TokenEqual) {
+            true => {
+                self.expression();
+                self.codegen.emit_bytes(&[OpSetGlobal.into(), arg]);
+            }
+            false => {
+                self.codegen.emit_bytes(&[OpGetGlobal.into(), arg]);
+            }
+        }
+    }
+
+    pub(crate) fn variable(&mut self) {
+        self.named_variable()
     }
 
     pub(crate) fn literal(&mut self) {
@@ -265,6 +287,24 @@ impl<'a> Parser {
                 Some(i) => { i(self) }
             }
         }
+    }
+
+    pub(crate) fn parse_variable(&mut self, msg: &str) -> usize {
+        self.consume(&TokenIdentifier, msg);
+        self.ident_const()
+    }
+
+    pub(crate) fn ident_const(&mut self) -> usize {
+        let value = match self.prev_tok.as_ref() {
+            None => "",
+            Some(val) => &val.raw,
+        };
+
+        self.codegen.emit_const_string(value.to_owned())
+    }
+
+    pub(crate) fn define_var(&mut self, global: u8) {
+        self.codegen.emit_bytes(&[OpDefineGlobal.into(), global]);
     }
 }
 

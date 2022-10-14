@@ -27,18 +27,27 @@ fn repl() {
     io::stdout().flush().unwrap();
 
     let stdin = io::stdin();
+
+    let mut machine = VM::new();
+
     for line in stdin.lock().lines() {
         let str = line.unwrap();
-        interpret(str);
+        let code = compile(str);
+        machine.interpret(code);
 
         print!("> ");
         io::stdout().flush().unwrap();
     }
+
+    machine.free();
 }
 
 fn run_file(file_name: &str) {
     let input = read_file(file_name);
-    let result = interpret(input);
+    let result = {
+        let code = compile(input);
+        run(code)
+    };
     match result {
         InterpretResult::InterpretOk => {}
         InterpretResult::InterpretCompileError => { exit(65) }
@@ -54,15 +63,19 @@ fn read_file(file_name: &str) -> String {
     data
 }
 
-fn interpret(input: String) -> InterpretResult {
+fn compile(input: String) -> Bytecodes {
     let mut compiler = Compiler::new(input);
 
     let code = compiler.compile();
 
-    // debug_bytecode(code, "MAIN");
+    debug_bytecode(&code, "MAIN");
 
-    let mut machine = VM::new(code);
-    machine.interpret();
+    code
+}
+
+fn run(code: Bytecodes) -> InterpretResult {
+    let mut machine = VM::new();
+    machine.interpret(code);
 
     machine.free();
 

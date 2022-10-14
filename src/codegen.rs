@@ -30,12 +30,16 @@ impl Codegen {
     pub(crate) fn emit_const_f64(&mut self, value: f64) -> usize {
         let addr = self.bytecodes.add_const_val(value);
         // TODO: add max constant check
-        self.bytecodes.write2(OpConstant.into(), addr as u8)
+        self.bytecodes.write2(OpConstant.into(), addr as u8);
+
+        addr
     }
 
     pub(crate) fn emit_const_string(&mut self, str: String) -> usize {
         let addr = self.bytecodes.add_const(Value(ValueRepr::String(str)));
         // TODO: add max constant check
-        self.bytecodes.write2(OpConstant.into(), addr as u8)
+        self.bytecodes.write2(OpConstant.into(), addr as u8);
+
+        addr
     }
 }

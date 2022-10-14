@@ -103,7 +103,7 @@ impl Parser {
         h.insert(TokenGreaterEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
         h.insert(TokenLess, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
         h.insert(TokenLessEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
-        h.insert(TokenIdentifier, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
+        h.insert(TokenIdentifier, ParseRule { prefix: Some(Parser::variable), infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenString, ParseRule { prefix: Some(Parser::string), infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenNumber, ParseRule { prefix: Some(Parser::number), infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenAnd, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
