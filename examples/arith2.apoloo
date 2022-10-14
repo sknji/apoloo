@@ -1,0 +1,5 @@
+var ten = 9 + 1;
+var eleven = 11;
+
+// expects 20
+print ten + 10 + eleven;

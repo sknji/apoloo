@@ -111,7 +111,7 @@ impl Lexer {
                     self.incr_line();
                     self.advance();
                 }
-                '/' if self.peek_is('/', Some(2)) => {
+                '/' if self.peek_is('/', Some(1)) => {
                     while !self.peek1_is('\n') && !self.is_end() {
                         self.advance();
                     }

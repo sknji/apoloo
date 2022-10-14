@@ -16,15 +16,10 @@ impl Compiler {
         self.parser.emit_return();
     }
 
-    pub fn compile(&mut self) -> &Bytecodes {
+    pub fn compile(&mut self) -> Bytecodes {
         self.parser.advance();
 
-        loop {
-            let tok = self.parser.curr_tok_type();
-            if tok.is(&TokenEof) {
-                break;
-            }
-
+        while !self.parser.match_advance(&TokenEof) {
             self.parser.declaration();
         }
 
@@ -32,11 +27,10 @@ impl Compiler {
 
         self.end_compiler();
 
-        let bytecodes = &self.parser.codegen.bytecodes;
         if self.parser.had_error {
-            debug::debug_bytecode(bytecodes, "MAIN");
+            debug::debug_bytecode(&self.parser.codegen.bytecodes, "MAIN");
         }
 
-        bytecodes
+        self.parser.codegen.bytecodes.to_owned()
     }
 }
