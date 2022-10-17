@@ -6,9 +6,9 @@ use crate::lexer::Lexer;
 use crate::OpCode::*;
 use crate::parser_rules::{ParsePrecedence, ParseRule};
 use crate::parser_rules::ParsePrecedence::*;
+use crate::scope::Scope;
 use crate::token::{Token, TokenType};
 use crate::token::TokenType::*;
-use crate::scope::Scope;
 
 pub(crate) struct Parser {
     pub(crate) lex: Lexer,
@@ -136,6 +136,20 @@ impl<'a> Parser {
         self.consume(&TokenLeftParen, "Expect '(' after 'if'.");
         self.expression();
         self.consume(&TokenRightParen, "Expect ')' after condition.");
+
+        let then_jump = self.codegen.emit_jump(OpJumpIfFalse.into());
+        self.codegen.emit_byte(OpPop.into());
+        self.statement();
+
+        let else_jump = self.codegen.emit_jump(OpJump.into());
+
+        self.codegen.patch_jump(then_jump);
+        self.codegen.emit_byte(OpPop.into());
+
+        if self.match_advance(&TokenElse) {
+            self.codegen.patch_jump(else_jump);
+            self.statement();
+        }
     }
 
     pub(crate) fn print_statement(&mut self) {
@@ -190,11 +204,13 @@ impl<'a> Parser {
     }
 
     pub(crate) fn named_variable(&mut self) {
-
         let mut get_op = OpUnKnown;
         let mut set_op = OpUnKnown;
         let mut arg = 0;
-        match self.scope.resolve_local(&self.prev_tok.as_ref().unwrap().raw){
+
+        let name = &self.prev_tok.as_ref().unwrap().raw;
+
+        match self.scope.resolve_local(name) {
             None => {
                 arg = self.ident_const() as u8;
                 get_op = OpGetGlobal;

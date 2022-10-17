@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Formatter;
+
 use crate::value::Value;
 
 #[repr(u8)]
@@ -28,6 +29,7 @@ pub enum OpCode {
     OpPopN = 20,
     OpGetLocal = 21,
     OpSetLocal = 22,
+    OpJump = 23,
     OpUnKnown = 99,
 }
 
@@ -56,6 +58,7 @@ impl From<u8> for OpCode {
             19 => OpCode::OpJumpIfFalse,
             20 => OpCode::OpGetLocal,
             21 => OpCode::OpSetLocal,
+            22 => OpCode::OpJump,
             _ => OpCode::OpUnKnown,
         }
     }
@@ -89,6 +92,7 @@ impl From<OpCode> for u8 {
             OpCode::OpPopN => 20,
             OpCode::OpGetLocal => 21,
             OpCode::OpSetLocal => 21,
+            OpCode::OpJump => 22,
         }
     }
 }
@@ -120,6 +124,7 @@ impl fmt::Display for OpCode {
             OpCode::OpSetLocal => "OP_SET_LOCAL",
             OpCode::OpJumpIfFalse => "OP_SET_GLOBAL",
             OpCode::OpPopN => "OP_POP_N",
+            OpCode::OpJump => "OP_JUMP",
         })
     }
 }

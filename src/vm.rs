@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::process::id;
+
 use crate::{Bytecodes, OpCode};
 use crate::compiler::Compiler;
 use crate::debug::debug_bytecode;
@@ -55,12 +56,12 @@ impl VM {
 
             let op: OpCode = self.read_opcode();
 
-            self.print_stack(&op, "BEFORE");
+            // self.print_stack(&op, "BEFORE");
             match self.process(&op) {
                 None => {}
                 Some(e) => return e,
             }
-            self.print_stack(&op, "AFTER");
+            // self.print_stack(&op, "AFTER");
         }
     }
 
@@ -73,7 +74,6 @@ impl VM {
             }
             OpCode::OpGetLocal => {
                 let slot = self.read_byte();
-                println!("Slot: {slot}");
                 let val: &Value = self.stack.get(slot as usize).unwrap();
                 self.push(val.clone());
             }
@@ -81,7 +81,17 @@ impl VM {
                 let idx = self.read_byte();
                 self.pop_n(idx);
             }
-            OpCode::OpJumpIfFalse => {}
+            OpCode::OpJump => {
+                let offset = self.read_short();
+                self.ip += offset;
+            }
+            OpCode::OpJumpIfFalse => {
+                let offset = self.read_short();
+                let val = self.peek(0);
+                if self.is_falsey(val) {
+                    self.ip += offset
+                }
+            }
             OpCode::OpSetGlobal => {
                 let key = self.read_const_str();
                 match self.globals.contains_key(&key) {
@@ -132,7 +142,6 @@ impl VM {
             OpCode::OpAdd => {
                 let r = self.pop();
                 let l = self.pop();
-                eprintln!("ADD: {}, {}", &l, &r);
                 self.push(l + r)
             }
             OpCode::OpSubtract => {
@@ -155,7 +164,7 @@ impl VM {
             OpCode::OpTrue => self.push(Value(ValueRepr::Boolean(true))),
             OpCode::OpNot => {
                 let value = self.pop();
-                self.push(Value(ValueRepr::Boolean(self.is_falsey(value))))
+                self.push(Value(ValueRepr::Boolean(self.is_falsey(&value))))
             }
             OpCode::OpEqual => {
                 let r = self.pop();
@@ -197,11 +206,26 @@ impl VM {
         self.stack.get(self.stack_top - 1 - distance).unwrap()
     }
 
+    fn peek_byte(&mut self, pos: usize) -> u8 {
+        let instr = self.code.code.get(self.ip + pos)
+            .unwrap();
+        return instr.clone();
+    }
+
     fn read_byte(&mut self) -> u8 {
         let instr = self.code.code.get(self.ip)
             .unwrap();
         self.ip += 1;
         return instr.clone();
+    }
+
+    fn read_short(&mut self) -> u16 {
+        let short = i16(self.peek_byte(1) << 8);
+        let short = short | self.peek_byte(2);
+
+        self.ip += 2;
+
+        short
     }
 
     fn read_opcode(&mut self) -> OpCode {
@@ -225,7 +249,7 @@ impl VM {
         // TODO:
     }
 
-    pub fn is_falsey(&self, value: Value) -> bool {
+    pub fn is_falsey(&self, value: &Value) -> bool {
         match value.0 {
             ValueRepr::Nil() => true,
             ValueRepr::Boolean(v) => !v,

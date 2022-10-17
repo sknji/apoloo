@@ -1,1 +1,1 @@
-{ var ten = 10; { var eleven = 11; }}
+{ var ten = 10; { var eleven = 11; } }

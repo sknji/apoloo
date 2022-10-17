@@ -62,7 +62,11 @@ fn simple_instruction(op: &OpCode, offset: usize) -> usize {
     offset + 1
 }
 
-fn byte_instruction(op: &OpCode, bytecodes: &Bytecodes,  offset: usize) -> usize {
+fn jump_instruction(op: &OpCode, sign: i8, bytecodes: &Bytecodes, offset: int) -> u16 {
+    0
+}
+
+fn byte_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> usize {
     let slot = bytecodes.code.get(offset + 1).unwrap();
 
     let str_len = op.to_string().len();
@@ -72,11 +76,10 @@ fn byte_instruction(op: &OpCode, bytecodes: &Bytecodes,  offset: usize) -> usize
         16 - str_len
     };
 
-    println!("{:->width$} {} {}", op, slot, width = str_pad);
+    println!("{:->width$} {}", op, slot, width = str_pad);
 
     offset + 2
 }
-
 
 fn constant_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> usize {
     let constant = match bytecodes.code.get(offset + 1) {
@@ -88,7 +91,7 @@ fn constant_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> us
                 16 - str_len
             };
 
-            print!("{:->width$} {} ", op, num = constant, width = str_pad);
+            print!("{:->width$} {} ", op, constant, width = str_pad);
             constant.clone()
         }
         None => {
