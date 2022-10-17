@@ -44,6 +44,10 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpDefineGlobal => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpGetGlobal => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpSetGlobal => constant_instruction(&op, bytecodes, offset),
+                OpCode::OpJumpIfFalse => constant_instruction(&op, bytecodes, offset),
+                OpCode::OpPopN => constant_instruction(&op, bytecodes, offset),
+                OpCode::OpGetLocal => byte_instruction(&op, bytecodes, offset),
+                OpCode::OpSetLocal => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpUnKnown => {
                     println!("Unknown opcode {:?}", op);
                     offset + 1
@@ -57,6 +61,22 @@ fn simple_instruction(op: &OpCode, offset: usize) -> usize {
     print!("{}\n", op);
     offset + 1
 }
+
+fn byte_instruction(op: &OpCode, bytecodes: &Bytecodes,  offset: usize) -> usize {
+    let slot = bytecodes.code.get(offset + 1).unwrap();
+
+    let str_len = op.to_string().len();
+    let str_pad = if str_len > 16 {
+        0
+    } else {
+        16 - str_len
+    };
+
+    println!("{:->width$} {} {}", op, slot, width = str_pad);
+
+    offset + 2
+}
+
 
 fn constant_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> usize {
     let constant = match bytecodes.code.get(offset + 1) {

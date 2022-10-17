@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::process::id;
 use crate::{Bytecodes, OpCode};
 use crate::compiler::Compiler;
 use crate::debug::debug_bytecode;
@@ -65,6 +66,22 @@ impl VM {
 
     fn process(&mut self, op: &OpCode) -> Option<InterpretResult> {
         match op {
+            OpCode::OpSetLocal => {
+                let slot = self.read_byte();
+                let val = self.peek(0);
+                self.stack.insert(slot as usize, val.clone())
+            }
+            OpCode::OpGetLocal => {
+                let slot = self.read_byte();
+                println!("Slot: {slot}");
+                let val: &Value = self.stack.get(slot as usize).unwrap();
+                self.push(val.clone());
+            }
+            OpCode::OpPopN => {
+                let idx = self.read_byte();
+                self.pop_n(idx);
+            }
+            OpCode::OpJumpIfFalse => {}
             OpCode::OpSetGlobal => {
                 let key = self.read_const_str();
                 match self.globals.contains_key(&key) {
@@ -169,6 +186,11 @@ impl VM {
     fn pop(&mut self) -> Value {
         self.stack_top -= 1;
         self.stack.pop().unwrap()
+    }
+
+    fn pop_n(&mut self, idx: u8) {
+        self.stack_top -= idx as usize;
+        self.stack.drain(self.stack_top..);
     }
 
     fn peek(&self, distance: usize) -> &Value {

@@ -18,6 +18,7 @@ mod token;
 mod lexer;
 mod parser_rules;
 mod parser;
+mod scope;
 mod codegen;
 mod compiler;
 mod vm;

@@ -8,6 +8,7 @@ use crate::parser_rules::{ParsePrecedence, ParseRule};
 use crate::parser_rules::ParsePrecedence::*;
 use crate::token::{Token, TokenType};
 use crate::token::TokenType::*;
+use crate::scope::Scope;
 
 pub(crate) struct Parser {
     pub(crate) lex: Lexer,
@@ -16,6 +17,7 @@ pub(crate) struct Parser {
     prev_tok: Option<Token>,
     pub(crate) parse_rules: HashMap<TokenType, ParseRule>,
     pub(crate) had_error: bool,
+    pub(crate) scope: Scope,
 }
 
 impl<'a> Parser {
@@ -27,6 +29,7 @@ impl<'a> Parser {
             codegen: Codegen::new(),
             had_error: false,
             parse_rules: HashMap::new(),
+            scope: Scope::new(),
         };
 
         p.parse_rules = p.rules();
@@ -101,6 +104,15 @@ impl<'a> Parser {
         self.parse(&PrecedenceAssignment);
     }
 
+    pub(crate) fn block(&mut self) {
+        while !self.curr_is(&TokenRightBrace) &&
+            !self.curr_is(&TokenEof) {
+            self.declaration();
+        }
+
+        self.consume(&TokenRightBrace, "Expected '}' after block");
+    }
+
     pub(crate) fn var_declaration(&mut self) {
         let global = self.parse_variable("Expect variable name");
         if self.match_advance(&TokenEqual) {
@@ -120,6 +132,12 @@ impl<'a> Parser {
         self.codegen.emit_byte(OpPop.into());
     }
 
+    pub(crate) fn if_statement(&mut self) {
+        self.consume(&TokenLeftParen, "Expect '(' after 'if'.");
+        self.expression();
+        self.consume(&TokenRightParen, "Expect ')' after condition.");
+    }
+
     pub(crate) fn print_statement(&mut self) {
         self.expression();
         self.consume(&TokenSemicolon, "Expect ';' after value.");
@@ -137,6 +155,12 @@ impl<'a> Parser {
     pub(crate) fn statement(&mut self) {
         if self.match_advance(&TokenPrint) {
             self.print_statement();
+        } else if self.match_advance(&TokenIf) {
+            self.if_statement();
+        } else if self.match_advance(&TokenLeftBrace) {
+            self.scope.begin_scope();
+            self.block();
+            self.codegen.emit_bytes(&[OpPopN.into(), self.scope.end_scope()]);
         } else {
             self.expression_statement();
         }
@@ -166,14 +190,30 @@ impl<'a> Parser {
     }
 
     pub(crate) fn named_variable(&mut self) {
-        let arg = self.ident_const() as u8;
+
+        let mut get_op = OpUnKnown;
+        let mut set_op = OpUnKnown;
+        let mut arg = 0;
+        match self.scope.resolve_local(&self.prev_tok.as_ref().unwrap().raw){
+            None => {
+                arg = self.ident_const() as u8;
+                get_op = OpGetGlobal;
+                set_op = OpSetGlobal;
+            }
+            Some(v) => {
+                arg = v;
+                get_op = OpGetLocal;
+                set_op = OpSetLocal;
+            }
+        }
+
         match self.match_advance(&TokenEqual) {
             true => {
                 self.expression();
-                self.codegen.emit_bytes(&[OpSetGlobal.into(), arg]);
+                self.codegen.emit_bytes(&[set_op.into(), arg]);
             }
             false => {
-                self.codegen.emit_bytes(&[OpGetGlobal.into(), arg]);
+                self.codegen.emit_bytes(&[get_op.into(), arg]);
             }
         }
     }
@@ -291,6 +331,13 @@ impl<'a> Parser {
 
     pub(crate) fn parse_variable(&mut self, msg: &str) -> usize {
         self.consume(&TokenIdentifier, msg);
+
+        self.declare_var();
+
+        if self.scope.scope_depth > 0 {
+            return 0;
+        }
+
         self.ident_const()
     }
 
@@ -303,7 +350,35 @@ impl<'a> Parser {
         self.codegen.emit_const_string(value.to_owned())
     }
 
+    pub(crate) fn add_local(&mut self, tok: &Token) {
+        if self.scope.local_count >= i8::MAX {
+            // TODO: error too many variables in function
+            return;
+        }
+
+        if self.scope.contains(tok.raw.as_ref()) {
+            // TODO: Already a variable with this name in this scope.
+            eprintln!("Already a variable with this name in this scope.");
+            return;
+        }
+
+        self.scope.add_local(&tok.raw)
+    }
+
+    pub(crate) fn declare_var(&mut self) {
+        if self.scope.scope_depth == 0 {
+            return;
+        }
+
+        let prev_tok = self.prev_tok.as_ref().unwrap().clone();
+        self.add_local(&prev_tok);
+    }
+
     pub(crate) fn define_var(&mut self, global: u8) {
+        if self.scope.scope_depth > 0 {
+            return;
+        }
+
         self.codegen.emit_bytes(&[OpDefineGlobal.into(), global]);
     }
 }

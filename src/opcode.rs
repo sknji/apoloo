@@ -24,6 +24,10 @@ pub enum OpCode {
     OpDefineGlobal = 16,
     OpGetGlobal = 17,
     OpSetGlobal = 18,
+    OpJumpIfFalse = 19,
+    OpPopN = 20,
+    OpGetLocal = 21,
+    OpSetLocal = 22,
     OpUnKnown = 99,
 }
 
@@ -49,6 +53,9 @@ impl From<u8> for OpCode {
             16 => OpCode::OpDefineGlobal,
             17 => OpCode::OpGetGlobal,
             18 => OpCode::OpSetGlobal,
+            19 => OpCode::OpJumpIfFalse,
+            20 => OpCode::OpGetLocal,
+            21 => OpCode::OpSetLocal,
             _ => OpCode::OpUnKnown,
         }
     }
@@ -78,6 +85,10 @@ impl From<OpCode> for u8 {
             OpCode::OpDefineGlobal => 16,
             OpCode::OpGetGlobal => 17,
             OpCode::OpSetGlobal => 18,
+            OpCode::OpJumpIfFalse => 19,
+            OpCode::OpPopN => 20,
+            OpCode::OpGetLocal => 21,
+            OpCode::OpSetLocal => 21,
         }
     }
 }
@@ -105,6 +116,10 @@ impl fmt::Display for OpCode {
             OpCode::OpDefineGlobal => "OP_DEFINE_GLOBAL",
             OpCode::OpGetGlobal => "OP_GET_GLOBAL",
             OpCode::OpSetGlobal => "OP_SET_GLOBAL",
+            OpCode::OpGetLocal => "OP_GET_LOCAL",
+            OpCode::OpSetLocal => "OP_SET_LOCAL",
+            OpCode::OpJumpIfFalse => "OP_SET_GLOBAL",
+            OpCode::OpPopN => "OP_POP_N",
         })
     }
 }

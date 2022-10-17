@@ -42,4 +42,21 @@ impl Codegen {
 
         addr
     }
+
+    pub(crate) fn emit_jump(&mut self, i: usize) -> usize {
+        self.emit_byte(i as u8);
+        self.emit_byte(0xFF);
+        self.emit_byte(0xFF);
+        self.bytecodes.code_count - 2
+    }
+
+    pub(crate) fn patch_jump(&mut self, offset: usize) {
+        let jump = self.bytecodes.code_count - offset - 2;
+        if (jump as u16) > u16::MAX {
+            // TODO: error
+        }
+
+        self.bytecodes.code.insert(offset as usize, ((jump >> 8) & 0xFF) as u8);
+        self.bytecodes.code.insert(offset as usize, (jump & 0xFF) as u8);
+    }
 }
