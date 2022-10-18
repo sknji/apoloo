@@ -44,10 +44,12 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpDefineGlobal => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpGetGlobal => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpSetGlobal => constant_instruction(&op, bytecodes, offset),
-                OpCode::OpJumpIfFalse => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpPopN => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpGetLocal => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpSetLocal => byte_instruction(&op, bytecodes, offset),
+                OpCode::OpJumpIfFalse => jump_instruction(&op, 1,bytecodes, offset),
+                OpCode::OpJump => jump_instruction(&op, 1, bytecodes, offset),
+                OpCode::OpLoop => jump_instruction(&op, -1, bytecodes, offset),
                 OpCode::OpUnKnown => {
                     println!("Unknown opcode {:?}", op);
                     offset + 1
@@ -62,35 +64,40 @@ fn simple_instruction(op: &OpCode, offset: usize) -> usize {
     offset + 1
 }
 
-fn jump_instruction(op: &OpCode, sign: i8, bytecodes: &Bytecodes, offset: int) -> u16 {
-    0
+fn jump_instruction(op: &OpCode, sign: i16, bytecodes: &Bytecodes, offset: usize) -> usize {
+    let jump: u16 = (bytecodes.code.get(offset + 1).unwrap().clone() as u16) << 8;
+    let jump = jump | bytecodes.code.get(offset + 2).unwrap().clone() as u16;
+
+    let str_pad = calc_str_op_padding(op);
+
+    println!("{:->width$} {} -> {}", op, offset, (offset as i16) + 3 + (sign * (jump as i16)), width = str_pad);
+
+    offset + 3
 }
 
 fn byte_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> usize {
     let slot = bytecodes.code.get(offset + 1).unwrap();
 
+    let str_pad = calc_str_op_padding(op);
+    println!("{:->width$} {}", op, slot, width = str_pad);
+
+    offset + 2
+}
+
+fn calc_str_op_padding(op: &OpCode) -> usize {
     let str_len = op.to_string().len();
     let str_pad = if str_len > 16 {
         0
     } else {
         16 - str_len
     };
-
-    println!("{:->width$} {}", op, slot, width = str_pad);
-
-    offset + 2
+    str_pad
 }
 
 fn constant_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> usize {
     let constant = match bytecodes.code.get(offset + 1) {
         Some(constant) => {
-            let str_len = op.to_string().len();
-            let str_pad = if str_len > 16 {
-                0
-            } else {
-                16 - str_len
-            };
-
+            let str_pad = calc_str_op_padding(op);
             print!("{:->width$} {} ", op, constant, width = str_pad);
             constant.clone()
         }

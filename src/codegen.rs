@@ -1,4 +1,4 @@
-use crate::Bytecodes;
+use crate::{Bytecodes, OpCode};
 use crate::OpCode::{OpConstant, OpReturn};
 use crate::value::{Value, ValueRepr};
 
@@ -9,6 +9,10 @@ pub(crate) struct Codegen {
 impl Codegen {
     pub(crate) fn new() -> Self {
         Codegen { bytecodes: Bytecodes::new() }
+    }
+
+    pub(crate) fn emit_op(&mut self, op: OpCode) -> usize {
+        self.emit_byte(op.into())
     }
 
     pub(crate) fn emit_byte(&mut self, b: u8) -> usize {
@@ -43,8 +47,8 @@ impl Codegen {
         addr
     }
 
-    pub(crate) fn emit_jump(&mut self, i: u8) -> usize {
-        self.emit_byte(i);
+    pub(crate) fn emit_jump(&mut self, op: OpCode) -> usize {
+        self.emit_op(op);
         self.emit_byte(0xFF);
         self.emit_byte(0xFF);
         self.bytecodes.code_count - 2
@@ -57,6 +61,18 @@ impl Codegen {
         }
 
         self.bytecodes.code.insert(offset as usize, ((jump >> 8) & 0xFF) as u8);
-        self.bytecodes.code.insert(offset as usize, (jump & 0xFF) as u8);
+        self.bytecodes.code.insert((offset + 1) as usize, (jump & 0xFF) as u8);
+    }
+
+    pub(crate) fn emit_loop(&mut self, start: usize) {
+        self.emit_op(OpCode::OpLoop);
+
+        let offset = (self.bytecodes.code_count - start + 2) as u16;
+        if offset > u16::MAX {
+            eprintln!("Loop body too large.");
+        }
+
+        self.emit_byte((offset >> 8 & 0xFF) as u8);
+        self.emit_byte((offset & 0xFF) as u8);
     }
 }

@@ -67,6 +67,10 @@ impl VM {
 
     fn process(&mut self, op: &OpCode) -> Option<InterpretResult> {
         match op {
+            OpCode::OpLoop => {
+                let offset = self.read_short() as usize;
+                self.ip -= offset;
+            }
             OpCode::OpSetLocal => {
                 let slot = self.read_byte();
                 let val = self.peek(0);
@@ -82,11 +86,11 @@ impl VM {
                 self.pop_n(idx);
             }
             OpCode::OpJump => {
-                let offset = self.read_short();
+                let offset = self.read_short() as usize;
                 self.ip += offset;
             }
             OpCode::OpJumpIfFalse => {
-                let offset = self.read_short();
+                let offset = self.read_short() as usize;
                 let val = self.peek(0);
                 if self.is_falsey(val) {
                     self.ip += offset
@@ -181,7 +185,9 @@ impl VM {
                 let l = self.pop();
                 self.push(Value(ValueRepr::Boolean(l > r)))
             }
-            OpCode::OpUnKnown => {}
+            OpCode::OpUnKnown => {
+                eprintln!("unknown opcode")
+            }
         };
 
         None
@@ -220,8 +226,8 @@ impl VM {
     }
 
     fn read_short(&mut self) -> u16 {
-        let short = i16(self.peek_byte(1) << 8);
-        let short = short | self.peek_byte(2);
+        let short: u16 = (self.peek_byte(0) as u16) << 8;
+        let short = short | self.peek_byte(1) as u16;
 
         self.ip += 2;
 

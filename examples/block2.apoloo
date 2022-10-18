@@ -1,1 +1,1 @@
-var global = 12; { var ten = 10; print ten;}
+var global = 12; { var ten = 10; {var five = 5; print five;} print ten; }

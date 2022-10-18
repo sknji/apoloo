@@ -30,6 +30,7 @@ pub enum OpCode {
     OpGetLocal = 21,
     OpSetLocal = 22,
     OpJump = 23,
+    OpLoop = 24,
     OpUnKnown = 99,
 }
 
@@ -56,9 +57,11 @@ impl From<u8> for OpCode {
             17 => OpCode::OpGetGlobal,
             18 => OpCode::OpSetGlobal,
             19 => OpCode::OpJumpIfFalse,
-            20 => OpCode::OpGetLocal,
-            21 => OpCode::OpSetLocal,
-            22 => OpCode::OpJump,
+            20 => OpCode::OpPopN,
+            21 => OpCode::OpGetLocal,
+            22 => OpCode::OpSetLocal,
+            23 => OpCode::OpJump,
+            24 => OpCode::OpLoop,
             _ => OpCode::OpUnKnown,
         }
     }
@@ -67,33 +70,7 @@ impl From<u8> for OpCode {
 
 impl From<OpCode> for u8 {
     fn from(op: OpCode) -> Self {
-        match op {
-            OpCode::OpReturn => 0,
-            OpCode::OpConstant => 1,
-            OpCode::OpNegate => 2,
-            OpCode::OpUnKnown => 99,
-            OpCode::OpAdd => 3,
-            OpCode::OpSubtract => 4,
-            OpCode::OpMultiple => 5,
-            OpCode::OpDivide => 6,
-            OpCode::OpNil => 7,
-            OpCode::OpTrue => 8,
-            OpCode::OpFalse => 9,
-            OpCode::OpNot => 10,
-            OpCode::OpEqual => 11,
-            OpCode::OpGreater => 12,
-            OpCode::OpLess => 13,
-            OpCode::OpPrint => 14,
-            OpCode::OpPop => 15,
-            OpCode::OpDefineGlobal => 16,
-            OpCode::OpGetGlobal => 17,
-            OpCode::OpSetGlobal => 18,
-            OpCode::OpJumpIfFalse => 19,
-            OpCode::OpPopN => 20,
-            OpCode::OpGetLocal => 21,
-            OpCode::OpSetLocal => 21,
-            OpCode::OpJump => 22,
-        }
+        op as u8
     }
 }
 
@@ -122,9 +99,10 @@ impl fmt::Display for OpCode {
             OpCode::OpSetGlobal => "OP_SET_GLOBAL",
             OpCode::OpGetLocal => "OP_GET_LOCAL",
             OpCode::OpSetLocal => "OP_SET_LOCAL",
-            OpCode::OpJumpIfFalse => "OP_SET_GLOBAL",
+            OpCode::OpJumpIfFalse => "OP_JUMP_IF_FALSE",
             OpCode::OpPopN => "OP_POP_N",
             OpCode::OpJump => "OP_JUMP",
+            OpCode::OpLoop => "OP_LOOP",
         })
     }
 }

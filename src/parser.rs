@@ -118,7 +118,7 @@ impl<'a> Parser {
         if self.match_advance(&TokenEqual) {
             self.expression();
         } else {
-            self.codegen.emit_byte(OpNil.into());
+            self.codegen.emit_op(OpNil);
         }
 
         self.consume(&TokenSemicolon, "Expect ';' after variable declaration.");
@@ -129,7 +129,7 @@ impl<'a> Parser {
     pub(crate) fn expression_statement(&mut self) {
         self.expression();
         self.consume(&TokenSemicolon, "Expect ';' after value.");
-        self.codegen.emit_byte(OpPop.into());
+        self.codegen.emit_op(OpPop);
     }
 
     pub(crate) fn if_statement(&mut self) {
@@ -137,14 +137,14 @@ impl<'a> Parser {
         self.expression();
         self.consume(&TokenRightParen, "Expect ')' after condition.");
 
-        let then_jump = self.codegen.emit_jump(OpJumpIfFalse.into());
-        self.codegen.emit_byte(OpPop.into());
+        let then_jump = self.codegen.emit_jump(OpJumpIfFalse);
+        self.codegen.emit_op(OpPop);
         self.statement();
 
-        let else_jump = self.codegen.emit_jump(OpJump.into());
+        let else_jump = self.codegen.emit_jump(OpJump);
 
         self.codegen.patch_jump(then_jump);
-        self.codegen.emit_byte(OpPop.into());
+        self.codegen.emit_op(OpPop);
 
         if self.match_advance(&TokenElse) {
             self.codegen.patch_jump(else_jump);
@@ -155,7 +155,24 @@ impl<'a> Parser {
     pub(crate) fn print_statement(&mut self) {
         self.expression();
         self.consume(&TokenSemicolon, "Expect ';' after value.");
-        self.codegen.emit_byte(OpPrint.into());
+        self.codegen.emit_op(OpPrint);
+    }
+
+    pub(crate) fn while_statement(&mut self) {
+        let loop_start = self.codegen.bytecodes.code_count;
+        self.consume(&TokenLeftParen, "Expect '(' after 'while'.");
+        self.expression();
+        self.consume(&TokenRightParen, "Expect ')' after condition.");
+
+        let exit_jump = self.codegen.emit_jump(OpJumpIfFalse);
+        self.codegen.emit_op(OpPop);
+
+        self.statement();
+
+        self.codegen.emit_loop(loop_start);
+
+        self.codegen.patch_jump(exit_jump);
+        self.codegen.emit_op(OpPop);
     }
 
     pub(crate) fn declaration(&mut self) {
@@ -171,6 +188,8 @@ impl<'a> Parser {
             self.print_statement();
         } else if self.match_advance(&TokenIf) {
             self.if_statement();
+        } else if self.match_advance(&TokenWhile) {
+            self.while_statement();
         } else if self.match_advance(&TokenLeftBrace) {
             self.scope.begin_scope();
             self.block();
@@ -241,10 +260,10 @@ impl<'a> Parser {
     pub(crate) fn literal(&mut self) {
         let prev_tok_type = self.prev_tok_type();
         match prev_tok_type {
-            TokenFalse => self.codegen.emit_byte(OpFalse.into()),
-            TokenTrue => self.codegen.emit_byte(OpTrue.into()),
-            TokenNil => self.codegen.emit_byte(OpNil.into()),
-            TokenPrint => self.codegen.emit_byte(OpPrint.into()),
+            TokenFalse => self.codegen.emit_op(OpFalse),
+            TokenTrue => self.codegen.emit_op(OpTrue),
+            TokenNil => self.codegen.emit_op(OpNil),
+            TokenPrint => self.codegen.emit_op(OpPrint),
             _ => return,
         };
     }
@@ -255,8 +274,8 @@ impl<'a> Parser {
         self.parse(&PrecedenceUnary);
 
         match prev_tok_type {
-            TokenMinus => self.codegen.emit_byte(OpNegate.into()),
-            TokenBang => self.codegen.emit_byte(OpNot.into()),
+            TokenMinus => self.codegen.emit_op(OpNegate),
+            TokenBang => self.codegen.emit_op(OpNot),
             _ => return,
         };
     }
@@ -270,16 +289,16 @@ impl<'a> Parser {
         self.parse(precedence);
 
         match prev_tok_type {
-            TokenPlus => self.codegen.emit_byte(OpAdd.into()),
-            TokenMinus => self.codegen.emit_byte(OpSubtract.into()),
-            TokenStar => self.codegen.emit_byte(OpMultiple.into()),
-            TokenSlash => self.codegen.emit_byte(OpDivide.into()),
+            TokenPlus => self.codegen.emit_op(OpAdd),
+            TokenMinus => self.codegen.emit_op(OpSubtract),
+            TokenStar => self.codegen.emit_op(OpMultiple),
+            TokenSlash => self.codegen.emit_op(OpDivide),
             TokenBangEqual => self.codegen.emit_bytes(&[OpEqual.into(), OpNot.into()]),
-            TokenEqualEqual => self.codegen.emit_byte(OpEqual.into()),
-            TokenGreater => self.codegen.emit_byte(OpGreater.into()),
+            TokenEqualEqual => self.codegen.emit_op(OpEqual),
+            TokenGreater => self.codegen.emit_op(OpGreater),
             TokenGreaterEqual => self.codegen.emit_bytes(&[OpLess.into(), OpNot.into()]),
-            TokenLess => self.codegen.emit_byte(OpLess.into()),
-            TokenLessEqual => self.codegen.emit_byte(OpDivide.into()),
+            TokenLess => self.codegen.emit_op(OpLess),
+            TokenLessEqual => self.codegen.emit_op(OpDivide),
             _ => return,
         };
     }
@@ -397,8 +416,28 @@ impl<'a> Parser {
 
         self.codegen.emit_bytes(&[OpDefineGlobal.into(), global]);
     }
-}
 
+    pub(crate) fn and_(&mut self) {
+        let end_jump = self.codegen.emit_op(OpJumpIfFalse);
+        self.codegen.emit_op(OpPop);
+
+        self.parse(&PrecedenceAnd);
+
+        self.codegen.patch_jump(end_jump);
+    }
+
+    pub(crate) fn or_(&mut self) {
+        let else_jump = self.codegen.emit_op(OpJumpIfFalse);
+        let end_jump = self.codegen.emit_op(OpJump);
+
+        self.codegen.patch_jump(else_jump);
+        self.codegen.emit_op(OpPop);
+
+        self.parse(&PrecedenceOr);
+
+        self.codegen.patch_jump(end_jump);
+    }
+}
 
 #[cfg(test)]
 mod tests {}
