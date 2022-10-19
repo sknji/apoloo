@@ -186,7 +186,7 @@ impl<'a> Parser {
             let increment_start = self.codegen.bytecodes.code_count;
             self.expression();
             self.codegen.emit_op(OpPop);
-            self.consume(&TokenRightParen, "Expect ')' after condition.");
+            self.consume(&TokenRightParen, "Expect ')' after for clauses.");
 
             self.codegen.emit_loop(loop_start);
             loop_start = increment_start;
@@ -237,7 +237,7 @@ impl<'a> Parser {
         } else if self.match_advance(&TokenWhile) {
             self.while_statement();
         } else if self.match_advance(&TokenFor) {
-            self.while_statement();
+            self.for_statement();
         } else if self.match_advance(&TokenLeftBrace) {
             self.scope.begin_scope();
             self.block();
@@ -332,9 +332,9 @@ impl<'a> Parser {
             TokenBangEqual => self.codegen.emit_op2(OpEqual, OpNot),
             TokenEqualEqual => self.codegen.emit_op(OpEqual),
             TokenGreater => self.codegen.emit_op(OpGreater),
-            TokenGreaterEqual => self.codegen.emit_bytes(&[OpLess.into(), OpNot.into()]),
+            TokenGreaterEqual => self.codegen.emit_op2(OpLess, OpNot),
             TokenLess => self.codegen.emit_op(OpLess),
-            TokenLessEqual => self.codegen.emit_op(OpDivide),
+            TokenLessEqual => self.codegen.emit_op2(OpGreater, OpNot),
             _ => return,
         };
     }
