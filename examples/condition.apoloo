@@ -1,1 +1,1 @@
-var five = 5; { var ten = 10; if ( true ) { print ten; } else { print ten; } }
+var five = 5; { var ten = 10; var eleven = 11; if ( false ) { print ten; } else { print eleven; } }

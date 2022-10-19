@@ -1,8 +1,4 @@
-if (true) {
-    print "yes";
-} else {
-    print "no";
-}
+if (true) { print "yes"; } else { print "no"; }
 
 var a = 1;
 while (a < 10) {

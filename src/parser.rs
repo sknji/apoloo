@@ -147,9 +147,10 @@ impl<'a> Parser {
         self.codegen.emit_op(OpPop);
 
         if self.match_advance(&TokenElse) {
-            self.codegen.patch_jump(else_jump);
             self.statement();
         }
+
+        self.codegen.patch_jump(else_jump);
     }
 
     pub(crate) fn print_statement(&mut self) {

@@ -37,7 +37,7 @@ fn repl() {
 
         machine.interpret(code);
 
-        print!("> ");
+        print!("apoloo> ");
         io::stdout().flush().unwrap();
     }
 
@@ -66,9 +66,7 @@ fn read_file(file_name: &str) -> String {
 }
 
 fn compile(input: String) -> Bytecodes {
-    let mut compiler = Compiler::new(input);
-
-    let code = compiler.compile();
+    let code = compiler::compile(input);
 
     debug_bytecode(&code, "MAIN");
 
