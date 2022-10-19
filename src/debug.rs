@@ -44,7 +44,7 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpDefineGlobal => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpGetGlobal => constant_instruction(&op, bytecodes, offset),
                 OpCode::OpSetGlobal => constant_instruction(&op, bytecodes, offset),
-                OpCode::OpPopN => constant_instruction(&op, bytecodes, offset),
+                OpCode::OpPopN => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpGetLocal => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpSetLocal => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpJumpIfFalse => jump_instruction(&op, 1,bytecodes, offset),
@@ -109,7 +109,7 @@ fn constant_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> us
 
     match bytecodes.values.get(constant as usize) {
         Some(val) => val.print(),
-        None => println!("Unknown constant value"),
+        None => println!("Unknown constant value {}", constant),
     }
 
     offset + 2

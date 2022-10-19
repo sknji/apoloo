@@ -74,7 +74,7 @@ impl VM {
             OpCode::OpSetLocal => {
                 let slot = self.read_byte();
                 let val = self.peek(0);
-                self.stack.insert(slot as usize, val.clone())
+                self.stack[slot as usize] = val.clone();
             }
             OpCode::OpGetLocal => {
                 let slot = self.read_byte();
@@ -124,7 +124,7 @@ impl VM {
                 let key = self.read_const_str();
                 let val = self.peek(0).clone();
                 self.globals.insert(key, val);
-                self.pop();
+                self.pop_n(2);
             }
             OpCode::OpPop => {
                 self.pop();

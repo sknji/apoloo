@@ -11,6 +11,22 @@ impl Codegen {
         Codegen { bytecodes: Bytecodes::new() }
     }
 
+    pub(crate) fn emit_op_operand2(&mut self, op: OpCode, o1: u8, o2: u8) -> usize {
+        self.emit_op(op);
+        self.emit_byte(o1);
+        self.emit_byte(o2)
+    }
+
+    pub(crate) fn emit_op_operand(&mut self, op: OpCode, o: u8) -> usize {
+        self.emit_op(op);
+        self.emit_byte(o)
+    }
+
+    pub(crate) fn emit_op2(&mut self, op1: OpCode, op2: OpCode) -> usize {
+        self.emit_op(op1);
+        self.emit_op(op2)
+    }
+
     pub(crate) fn emit_op(&mut self, op: OpCode) -> usize {
         self.emit_byte(op.into())
     }
@@ -49,8 +65,7 @@ impl Codegen {
 
     pub(crate) fn emit_jump(&mut self, op: OpCode) -> usize {
         self.emit_op(op);
-        self.emit_byte(0xFF);
-        self.emit_byte(0xFF);
+        self.emit_bytes(&[0xFF, 0xFF]);
         self.bytecodes.code_count - 2
     }
 
@@ -60,8 +75,8 @@ impl Codegen {
             eprintln!("Too much code to jump over.");
         }
 
-        self.bytecodes.code.insert(offset as usize, ((jump >> 8) & 0xFF) as u8);
-        self.bytecodes.code.insert((offset + 1) as usize, (jump & 0xFF) as u8);
+        self.bytecodes.code[offset as usize] = ((jump >> 8) & 0xFF) as u8;
+        self.bytecodes.code[(offset + 1) as usize] = (jump & 0xFF) as u8;
     }
 
     pub(crate) fn emit_loop(&mut self, start: usize) {

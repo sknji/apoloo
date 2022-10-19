@@ -4,7 +4,7 @@ use std::fmt::Formatter;
 use crate::value::Value;
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, PartialOrd, Copy, Clone, Debug)]
 pub enum OpCode {
     OpReturn = 0,
     OpConstant = 1,
@@ -62,7 +62,11 @@ impl From<u8> for OpCode {
             22 => OpCode::OpSetLocal,
             23 => OpCode::OpJump,
             24 => OpCode::OpLoop,
-            _ => OpCode::OpUnKnown,
+            99 => OpCode::OpUnKnown,
+            o => {
+                eprintln!("Opcode '{}' not found. Compiler error", o);
+                OpCode::OpUnKnown
+            },
         }
     }
 }

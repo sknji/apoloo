@@ -158,6 +158,52 @@ impl<'a> Parser {
         self.codegen.emit_op(OpPrint);
     }
 
+    pub(crate) fn for_statement(&mut self) {
+        self.scope.begin_scope();
+        self.consume(&TokenLeftParen, "Expect '(' after 'for'.");
+
+        if self.match_advance(&TokenSemicolon) {
+            // No initializer
+        } else if self.match_advance(&TokenVar) {
+            self.var_declaration();
+        } else {
+            self.expression_statement();
+        }
+
+        let mut loop_start = self.codegen.bytecodes.code_count;
+        let mut exit_jump = None;
+
+        if !self.match_advance(&TokenSemicolon) {
+            self.expression();
+            self.consume(&TokenSemicolon, "Expect ';' after loop condition.");
+
+            exit_jump = Some(self.codegen.emit_jump(OpJumpIfFalse));
+            self.codegen.emit_op(OpPop);
+        }
+
+        if !self.match_advance(&TokenRightParen) {
+            let body_jump = self.codegen.emit_jump(OpJump);
+            let increment_start = self.codegen.bytecodes.code_count;
+            self.expression();
+            self.codegen.emit_op(OpPop);
+            self.consume(&TokenRightParen, "Expect ')' after condition.");
+
+            self.codegen.emit_loop(loop_start);
+            loop_start = increment_start;
+            self.codegen.patch_jump(body_jump);
+        }
+
+        self.statement();
+        self.codegen.emit_loop(loop_start);
+
+        if let Some(i) = exit_jump {
+            self.codegen.patch_jump(i);
+            self.codegen.emit_op(OpPop);
+        }
+
+        self.scope.end_scope();
+    }
+
     pub(crate) fn while_statement(&mut self) {
         let loop_start = self.codegen.bytecodes.code_count;
         self.consume(&TokenLeftParen, "Expect '(' after 'while'.");
@@ -190,10 +236,12 @@ impl<'a> Parser {
             self.if_statement();
         } else if self.match_advance(&TokenWhile) {
             self.while_statement();
+        } else if self.match_advance(&TokenFor) {
+            self.while_statement();
         } else if self.match_advance(&TokenLeftBrace) {
             self.scope.begin_scope();
             self.block();
-            self.codegen.emit_bytes(&[OpPopN.into(), self.scope.end_scope()]);
+            self.codegen.emit_op_operand(OpPopN, self.scope.end_scope());
         } else {
             self.expression_statement();
         }
@@ -223,32 +271,20 @@ impl<'a> Parser {
     }
 
     pub(crate) fn named_variable(&mut self) {
-        let mut get_op = OpUnKnown;
-        let mut set_op = OpUnKnown;
-        let mut arg = 0;
-
         let name = &self.prev_tok.as_ref().unwrap().raw;
 
-        match self.scope.resolve_local(name) {
-            None => {
-                arg = self.ident_const() as u8;
-                get_op = OpGetGlobal;
-                set_op = OpSetGlobal;
-            }
-            Some(v) => {
-                arg = v;
-                get_op = OpGetLocal;
-                set_op = OpSetLocal;
-            }
-        }
+        let (get_op, set_op, arg) = match self.scope.resolve_local(name) {
+            None => (OpGetGlobal, OpSetGlobal, self.ident_const() as u8),
+            Some(v) => (OpGetLocal, OpSetLocal, v),
+        };
 
         match self.match_advance(&TokenEqual) {
             true => {
                 self.expression();
-                self.codegen.emit_bytes(&[set_op.into(), arg]);
+                self.codegen.emit_op_operand(set_op, arg);
             }
             false => {
-                self.codegen.emit_bytes(&[get_op.into(), arg]);
+                self.codegen.emit_op_operand(get_op, arg);
             }
         }
     }
@@ -293,7 +329,7 @@ impl<'a> Parser {
             TokenMinus => self.codegen.emit_op(OpSubtract),
             TokenStar => self.codegen.emit_op(OpMultiple),
             TokenSlash => self.codegen.emit_op(OpDivide),
-            TokenBangEqual => self.codegen.emit_bytes(&[OpEqual.into(), OpNot.into()]),
+            TokenBangEqual => self.codegen.emit_op2(OpEqual, OpNot),
             TokenEqualEqual => self.codegen.emit_op(OpEqual),
             TokenGreater => self.codegen.emit_op(OpGreater),
             TokenGreaterEqual => self.codegen.emit_bytes(&[OpLess.into(), OpNot.into()]),
