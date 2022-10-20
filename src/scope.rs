@@ -17,11 +17,7 @@ impl Local {
 
 impl Scope {
     pub fn new() -> Self {
-        Self {
-            local_count: 0,
-            locals: Vec::new(),
-            scope_depth: 0,
-        }
+        Self { local_count: 0, locals: Vec::new(), scope_depth: 0 }
     }
 
     pub fn begin_scope(&mut self) {
@@ -31,8 +27,8 @@ impl Scope {
     pub fn end_scope(&mut self) -> u8 {
         self.scope_depth -= 1;
         let mut counts = 0;
-        while self.local_count > 0 &&
-            self.locals.get((self.local_count - 1) as usize).unwrap().depth > self.scope_depth {
+        while self.local_count > 0 && self.locals.get((self.local_count - 1) as usize).unwrap().depth > self.scope_depth
+        {
             counts += 1;
             self.local_count -= 1
         }
@@ -70,12 +66,12 @@ impl Scope {
         while counter >= 0 {
             let l = self.locals.get(counter as usize);
             match l {
-                None => {}
+                None => {},
                 Some(v) => {
                     if v.name.eq(name) {
                         return Some(counter as u8);
                     }
-                }
+                },
             }
 
             counter -= 1;

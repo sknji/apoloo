@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use crate::Bytecodes;
 use crate::codegen::Codegen;
 use crate::lexer::Lexer;
-use crate::OpCode::*;
-use crate::parser_rules::{ParsePrecedence, ParseRule};
 use crate::parser_rules::ParsePrecedence::*;
+use crate::parser_rules::{ParsePrecedence, ParseRule};
 use crate::scope::Scope;
-use crate::token::{Token, TokenType};
 use crate::token::TokenType::*;
+use crate::token::{Token, TokenType};
+use crate::Bytecodes;
+use crate::OpCode::*;
 
 pub(crate) struct Parser {
     pub(crate) lex: Lexer,
@@ -49,7 +49,7 @@ impl<'a> Parser {
             match &self.curr_tok {
                 None => break,
                 Some(t) if !t.is(TokenError) => return,
-                _ => {}
+                _ => {},
             }
 
             self.error_at_curr("Error at advance current")
@@ -82,18 +82,21 @@ impl<'a> Parser {
         match &self.prev_tok.clone() {
             Some(tok) => Some(&tok.token_type),
             None => None,
-            _ => None
-        }.unwrap().clone()
+            _ => None,
+        }
+        .unwrap()
+        .clone()
     }
 
     pub(crate) fn curr_tok_type(&self) -> TokenType {
         match &self.curr_tok.clone() {
             Some(tok) => Some(&tok.token_type),
             None => None,
-            _ => None
-        }.unwrap().clone()
+            _ => None,
+        }
+        .unwrap()
+        .clone()
     }
-
 
     pub(crate) fn grouping(&mut self) {
         self.expression();
@@ -105,8 +108,7 @@ impl<'a> Parser {
     }
 
     pub(crate) fn block(&mut self) {
-        while !self.curr_is(&TokenRightBrace) &&
-            !self.curr_is(&TokenEof) {
+        while !self.curr_is(&TokenRightBrace) && !self.curr_is(&TokenEof) {
             self.declaration();
         }
 
@@ -252,9 +254,7 @@ impl<'a> Parser {
         let value = self.prev_tok.as_ref();
         let value: f64 = match value {
             None => 0.0,
-            Some(val) => {
-                val.raw.parse().unwrap_or(0.0)
-            }
+            Some(val) => val.raw.parse().unwrap_or(0.0),
         };
 
         self.codegen.emit_const_f64(value);
@@ -264,8 +264,7 @@ impl<'a> Parser {
         let value = self.prev_tok.as_ref();
         let value = match value {
             None => "",
-            Some(val) => val.raw
-                .trim_matches('"'),
+            Some(val) => val.raw.trim_matches('"'),
         };
 
         self.codegen.emit_const_string(value.to_owned());
@@ -283,10 +282,10 @@ impl<'a> Parser {
             true => {
                 self.expression();
                 self.codegen.emit_op_operand(set_op, arg);
-            }
+            },
             false => {
                 self.codegen.emit_op_operand(get_op, arg);
-            }
+            },
         }
     }
 
@@ -354,10 +353,10 @@ impl<'a> Parser {
         eprint!("[line {}] Error", tok.line);
         match tok.token_type {
             TokenEof => eprint!(" at end"),
-            TokenError => {}
+            TokenError => {},
             _ => {
                 eprint!(" at {}", tok.raw)
-            }
+            },
         }
 
         eprintln!(": {}", msg);
@@ -374,8 +373,8 @@ impl<'a> Parser {
         let prefix_rule = rule.prefix;
 
         match prefix_rule {
-            None => { self.error("Expected expression") }
-            Some(p) => { p(self) }
+            None => self.error("Expected expression"),
+            Some(p) => p(self),
         }
 
         loop {
@@ -395,8 +394,8 @@ impl<'a> Parser {
             let infix_rule = infix.infix;
 
             match infix_rule {
-                None => { self.error("Expected expression") }
-                Some(i) => { i(self) }
+                None => self.error("Expected expression"),
+                Some(i) => i(self),
             }
         }
     }

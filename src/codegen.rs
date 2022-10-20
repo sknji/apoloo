@@ -1,6 +1,6 @@
-use crate::{Bytecodes, OpCode};
-use crate::OpCode::{OpConstant, OpReturn};
 use crate::value::{Value, ValueRepr};
+use crate::OpCode::{OpConstant, OpReturn};
+use crate::{Bytecodes, OpCode};
 
 pub(crate) struct Codegen {
     pub(crate) bytecodes: Bytecodes,

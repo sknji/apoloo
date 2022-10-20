@@ -1,15 +1,14 @@
-use crate::{Bytecodes, debug};
 use crate::codegen::Codegen;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::scope::Scope;
 use crate::token::TokenType::TokenEof;
+use crate::{debug, Bytecodes};
 
 pub struct Compiler {
     pub(crate) scope: Scope,
     pub(crate) codegen: Codegen,
 }
-
 
 pub fn compile(input: String) -> Bytecodes {
     let mut parser = Parser::new(Lexer::new(input));

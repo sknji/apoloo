@@ -34,7 +34,7 @@ impl Neg for Value {
         match self.0 {
             ValueRepr::Boolean(v) => Value(ValueRepr::Boolean(!v)),
             ValueRepr::Number(v) => Value(ValueRepr::Number(-v)),
-            _ => Value(ValueRepr::Nil())
+            _ => Value(ValueRepr::Nil()),
         }
     }
 }
@@ -44,13 +44,9 @@ impl Add for Value {
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self.0, rhs.0) {
-            (ValueRepr::Number(l), ValueRepr::Number(r)) => {
-                Value(ValueRepr::Number(l + r))
-            }
-            (ValueRepr::String(l), ValueRepr::String(r)) => {
-                Value(ValueRepr::String(l + &r))
-            }
-            _ => Value(ValueRepr::Nil())
+            (ValueRepr::Number(l), ValueRepr::Number(r)) => Value(ValueRepr::Number(l + r)),
+            (ValueRepr::String(l), ValueRepr::String(r)) => Value(ValueRepr::String(l + &r)),
+            _ => Value(ValueRepr::Nil()),
         }
     }
 }
@@ -60,10 +56,8 @@ impl Sub for Value {
 
     fn sub(self, rhs: Self) -> Self::Output {
         match (self.0, rhs.0) {
-            (ValueRepr::Number(l), ValueRepr::Number(r)) => {
-                Value(ValueRepr::Number(l - r))
-            }
-            _ => Value(ValueRepr::Nil())
+            (ValueRepr::Number(l), ValueRepr::Number(r)) => Value(ValueRepr::Number(l - r)),
+            _ => Value(ValueRepr::Nil()),
         }
     }
 }
@@ -73,13 +67,9 @@ impl Mul for Value {
 
     fn mul(self, rhs: Self) -> Self::Output {
         match (self.0, rhs.0) {
-            (ValueRepr::Number(l), ValueRepr::Number(r)) => {
-                Value(ValueRepr::Number(l * r))
-            }
-            (ValueRepr::String(l), ValueRepr::Number(t)) => {
-                Value(ValueRepr::String(l.repeat(t as usize)))
-            }
-            _ => Value(ValueRepr::Nil())
+            (ValueRepr::Number(l), ValueRepr::Number(r)) => Value(ValueRepr::Number(l * r)),
+            (ValueRepr::String(l), ValueRepr::Number(t)) => Value(ValueRepr::String(l.repeat(t as usize))),
+            _ => Value(ValueRepr::Nil()),
         }
     }
 }
@@ -89,10 +79,8 @@ impl Div for Value {
 
     fn div(self, rhs: Self) -> Self::Output {
         match (self.0, rhs.0) {
-            (ValueRepr::Number(l), ValueRepr::Number(r)) => {
-                Value(ValueRepr::Number(l / r))
-            }
-            _ => Value(ValueRepr::Nil())
+            (ValueRepr::Number(l), ValueRepr::Number(r)) => Value(ValueRepr::Number(l / r)),
+            _ => Value(ValueRepr::Nil()),
         }
     }
 }
@@ -118,7 +106,7 @@ impl PartialOrd for Value {
                     return Some(Ordering::Greater);
                 }
                 return Some(Ordering::Equal);
-            }
+            },
             (ValueRepr::String(l), ValueRepr::String(r)) => {
                 if l < r {
                     return Some(Ordering::Less);
@@ -126,7 +114,7 @@ impl PartialOrd for Value {
                     return Some(Ordering::Greater);
                 }
                 return Some(Ordering::Equal);
-            }
+            },
             _ => None,
         }
     }

@@ -1,8 +1,8 @@
 use std::str;
 
 use crate::helpers::*;
-use crate::token::*;
 use crate::token::TokenType::*;
+use crate::token::*;
 
 #[derive(Debug, Clone)]
 pub struct Lexer {
@@ -70,7 +70,7 @@ impl Lexer {
         let p = pos.unwrap_or(0);
         match self.input.get(self.current + p) {
             None => None,
-            Some(val) => Some(*val as char)
+            Some(val) => Some(*val as char),
         }
     }
 
@@ -100,22 +100,22 @@ impl Lexer {
         loop {
             let ch = match self.peek1() {
                 None => return,
-                Some(c) => c
+                Some(c) => c,
             };
 
             match ch {
                 ' ' | '\r' | '\t' => {
                     self.advance();
-                }
+                },
                 '\n' => {
                     self.incr_line();
                     self.advance();
-                }
+                },
                 '/' if self.peek_is('/', Some(1)) => {
                     while !self.peek1_is('\n') && !self.is_end() {
                         self.advance();
                     }
-                }
+                },
                 _ => return,
             }
         }
@@ -182,8 +182,12 @@ impl Lexer {
         }
 
         let ch = self.advance();
-        if is_digit(ch) { return self.number(); }
-        if is_alpha(ch) { return self.ident(); }
+        if is_digit(ch) {
+            return self.number();
+        }
+        if is_alpha(ch) {
+            return self.ident();
+        }
 
         match ch as char {
             '(' => self.make_token(TokenLeftParen),
@@ -203,30 +207,30 @@ impl Lexer {
                     false => TokenBang,
                 };
                 self.make_token(tok_type)
-            }
+            },
             '=' => {
                 let tok_type = match self.next_matches('=') {
                     true => TokenEqualEqual,
                     false => TokenEqual,
                 };
                 self.make_token(tok_type)
-            }
+            },
             '<' => {
                 let tok_type = match self.next_matches('=') {
                     true => TokenLessEqual,
                     false => TokenEqual,
                 };
                 self.make_token(tok_type)
-            }
+            },
             '>' => {
                 let tok_type = match self.next_matches('=') {
                     true => TokenGreaterEqual,
                     false => TokenGreater,
                 };
                 self.make_token(tok_type)
-            }
+            },
             '"' => self.string(),
-            _ => self.error_token(format!("unexpected character {ch}").as_ref())
+            _ => self.error_token(format!("unexpected character {ch}").as_ref()),
         }
     }
     fn is_end(&self) -> bool {

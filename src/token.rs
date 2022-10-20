@@ -1,7 +1,10 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use crate::token::TokenType::{TokenAnd, TokenClass, TokenElse, TokenFalse, TokenFor, TokenFun, TokenIdentifier, TokenIf, TokenNil, TokenOr, TokenPrint, TokenReturn, TokenSuper, TokenThis, TokenTrue, TokenVar, TokenWhile};
+use crate::token::TokenType::{
+    TokenAnd, TokenClass, TokenElse, TokenFalse, TokenFor, TokenFun, TokenIdentifier, TokenIf, TokenNil, TokenOr,
+    TokenPrint, TokenReturn, TokenSuper, TokenThis, TokenTrue, TokenVar, TokenWhile,
+};
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -101,10 +104,8 @@ impl TokenType {
     }
 }
 
-
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}:{}] {:?} {}",
-               self.line, self.col, self.token_type, self.raw)
+        write!(f, "[{}:{}] {:?} {}", self.line, self.col, self.token_type, self.raw)
     }
 }

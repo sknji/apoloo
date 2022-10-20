@@ -15,15 +15,15 @@ pub(crate) struct ParseRule {
 #[derive(Clone, Eq, PartialEq, PartialOrd, Hash, Debug)]
 pub(crate) enum ParsePrecedence {
     PrecedenceNone = 1,
-    PrecedenceAssignment = 2 /* = */,
-    PrecedenceOr = 3 /* or */,
-    PrecedenceAnd = 4 /* and */,
-    PrecedenceEquality = 5 /* ==, != */,
-    PrecedenceComparison = 6 /* <, >, <=, >= */,
-    PrecedenceTerm = 7 /* +, - */,
-    PrecedenceFactor = 8 /* *, / */,
-    PrecedenceUnary = 9 /* !, - */,
-    PrecedenceCall = 10 /* ., () */,
+    PrecedenceAssignment = 2, /* = */
+    PrecedenceOr = 3,         /* or */
+    PrecedenceAnd = 4,        /* and */
+    PrecedenceEquality = 5,   /* ==, != */
+    PrecedenceComparison = 6, /* <, >, <=, >= */
+    PrecedenceTerm = 7,       /* +, - */
+    PrecedenceFactor = 8,     /* *, / */
+    PrecedenceUnary = 9,      /* !, - */
+    PrecedenceCall = 10,      /* ., () */
 
     PrecedencePrimary = 11,
 }
@@ -42,7 +42,7 @@ impl ParsePrecedence {
             9 => ParsePrecedence::PrecedenceUnary,
             10 => ParsePrecedence::PrecedenceCall,
             11 => ParsePrecedence::PrecedencePrimary,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -59,7 +59,7 @@ impl ParsePrecedence {
             ParsePrecedence::PrecedenceUnary => 9,
             ParsePrecedence::PrecedenceCall => 10,
             ParsePrecedence::PrecedencePrimary => 11,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -84,42 +84,106 @@ impl Parser {
 
     pub(crate) fn rules(&mut self) -> HashMap<TokenType, ParseRule> {
         let mut h = HashMap::new();
-        h.insert(TokenLeftParen, ParseRule { prefix: Some(Parser::grouping), infix: None, precedence: ParsePrecedence::PrecedenceNone });
+        h.insert(
+            TokenLeftParen,
+            ParseRule { prefix: Some(Parser::grouping), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
         h.insert(TokenRightParen, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenLeftBrace, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenRightBrace, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenComma, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenDot, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenMinus, ParseRule { prefix: Some(Parser::unary), infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceTerm });
-        h.insert(TokenPlus, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceTerm });
+        h.insert(
+            TokenMinus,
+            ParseRule {
+                prefix: Some(Parser::unary),
+                infix: Some(Parser::binary),
+                precedence: ParsePrecedence::PrecedenceTerm,
+            },
+        );
+        h.insert(
+            TokenPlus,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceTerm },
+        );
         h.insert(TokenSemicolon, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenSlash, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceFactor });
-        h.insert(TokenStar, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceFactor });
-        h.insert(TokenBang, ParseRule { prefix: Some(Parser::unary), infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenBangEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceEquality });
+        h.insert(
+            TokenSlash,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceFactor },
+        );
+        h.insert(
+            TokenStar,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceFactor },
+        );
+        h.insert(
+            TokenBang,
+            ParseRule { prefix: Some(Parser::unary), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
+        h.insert(
+            TokenBangEqual,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceEquality },
+        );
         h.insert(TokenEqual, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenEqualEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceEquality });
-        h.insert(TokenGreater, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
-        h.insert(TokenGreaterEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
-        h.insert(TokenLess, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
-        h.insert(TokenLessEqual, ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison });
-        h.insert(TokenIdentifier, ParseRule { prefix: Some(Parser::variable), infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenString, ParseRule { prefix: Some(Parser::string), infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenNumber, ParseRule { prefix: Some(Parser::number), infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenAnd, ParseRule { prefix: None, infix: Some(Parser::and_), precedence: ParsePrecedence::PrecedenceAnd });
+        h.insert(
+            TokenEqualEqual,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceEquality },
+        );
+        h.insert(
+            TokenGreater,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison },
+        );
+        h.insert(
+            TokenGreaterEqual,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison },
+        );
+        h.insert(
+            TokenLess,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison },
+        );
+        h.insert(
+            TokenLessEqual,
+            ParseRule { prefix: None, infix: Some(Parser::binary), precedence: ParsePrecedence::PrecedenceComparison },
+        );
+        h.insert(
+            TokenIdentifier,
+            ParseRule { prefix: Some(Parser::variable), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
+        h.insert(
+            TokenString,
+            ParseRule { prefix: Some(Parser::string), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
+        h.insert(
+            TokenNumber,
+            ParseRule { prefix: Some(Parser::number), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
+        h.insert(
+            TokenAnd,
+            ParseRule { prefix: None, infix: Some(Parser::and_), precedence: ParsePrecedence::PrecedenceAnd },
+        );
         h.insert(TokenClass, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenElse, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenFalse, ParseRule { prefix: Some(Parser::literal), infix: None, precedence: ParsePrecedence::PrecedenceNone });
+        h.insert(
+            TokenFalse,
+            ParseRule { prefix: Some(Parser::literal), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
         h.insert(TokenFor, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenFun, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenIf, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenNil, ParseRule { prefix: Some(Parser::literal), infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenOr, ParseRule { prefix: None, infix: Some(Parser::or_), precedence: ParsePrecedence::PrecedenceOr });
+        h.insert(
+            TokenNil,
+            ParseRule { prefix: Some(Parser::literal), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
+        h.insert(
+            TokenOr,
+            ParseRule { prefix: None, infix: Some(Parser::or_), precedence: ParsePrecedence::PrecedenceOr },
+        );
         h.insert(TokenPrint, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenReturn, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenSuper, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenThis, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
-        h.insert(TokenTrue, ParseRule { prefix: Some(Parser::literal), infix: None, precedence: ParsePrecedence::PrecedenceNone });
+        h.insert(
+            TokenTrue,
+            ParseRule { prefix: Some(Parser::literal), infix: None, precedence: ParsePrecedence::PrecedenceNone },
+        );
         h.insert(TokenVar, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenWhile, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });
         h.insert(TokenError, ParseRule { prefix: None, infix: None, precedence: ParsePrecedence::PrecedenceNone });

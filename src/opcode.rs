@@ -71,7 +71,6 @@ impl From<u8> for OpCode {
     }
 }
 
-
 impl From<OpCode> for u8 {
     fn from(op: OpCode) -> Self {
         op as u8
@@ -80,33 +79,37 @@ impl From<OpCode> for u8 {
 
 impl fmt::Display for OpCode {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", match self {
-            OpCode::OpReturn => "OP_RETURN",
-            OpCode::OpConstant => "OP_CONSTANT",
-            OpCode::OpNegate => "OP_NEGATE",
-            OpCode::OpUnKnown => "OP_UNKNOWN",
-            OpCode::OpAdd => "OP_ADD",
-            OpCode::OpSubtract => "OP_SUBTRACT",
-            OpCode::OpMultiple => "OP_MULTIPLE",
-            OpCode::OpDivide => "OP_DIVIDE",
-            OpCode::OpNil => "OP_NIL",
-            OpCode::OpTrue => "OP_TRUE",
-            OpCode::OpFalse => "OP_FALSE",
-            OpCode::OpNot => "OP_NOT",
-            OpCode::OpEqual => "OP_EQUAL",
-            OpCode::OpGreater => "OP_GREATER",
-            OpCode::OpLess => "OP_LESS",
-            OpCode::OpPrint => "OP_PRINT",
-            OpCode::OpPop => "OP_POP",
-            OpCode::OpDefineGlobal => "OP_DEFINE_GLOBAL",
-            OpCode::OpGetGlobal => "OP_GET_GLOBAL",
-            OpCode::OpSetGlobal => "OP_SET_GLOBAL",
-            OpCode::OpGetLocal => "OP_GET_LOCAL",
-            OpCode::OpSetLocal => "OP_SET_LOCAL",
-            OpCode::OpJumpIfFalse => "OP_JUMP_IF_FALSE",
-            OpCode::OpPopN => "OP_POP_N",
-            OpCode::OpJump => "OP_JUMP",
-            OpCode::OpLoop => "OP_LOOP",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                OpCode::OpReturn => "OP_RETURN",
+                OpCode::OpConstant => "OP_CONSTANT",
+                OpCode::OpNegate => "OP_NEGATE",
+                OpCode::OpUnKnown => "OP_UNKNOWN",
+                OpCode::OpAdd => "OP_ADD",
+                OpCode::OpSubtract => "OP_SUBTRACT",
+                OpCode::OpMultiple => "OP_MULTIPLE",
+                OpCode::OpDivide => "OP_DIVIDE",
+                OpCode::OpNil => "OP_NIL",
+                OpCode::OpTrue => "OP_TRUE",
+                OpCode::OpFalse => "OP_FALSE",
+                OpCode::OpNot => "OP_NOT",
+                OpCode::OpEqual => "OP_EQUAL",
+                OpCode::OpGreater => "OP_GREATER",
+                OpCode::OpLess => "OP_LESS",
+                OpCode::OpPrint => "OP_PRINT",
+                OpCode::OpPop => "OP_POP",
+                OpCode::OpDefineGlobal => "OP_DEFINE_GLOBAL",
+                OpCode::OpGetGlobal => "OP_GET_GLOBAL",
+                OpCode::OpSetGlobal => "OP_SET_GLOBAL",
+                OpCode::OpGetLocal => "OP_GET_LOCAL",
+                OpCode::OpSetLocal => "OP_SET_LOCAL",
+                OpCode::OpJumpIfFalse => "OP_JUMP_IF_FALSE",
+                OpCode::OpPopN => "OP_POP_N",
+                OpCode::OpJump => "OP_JUMP",
+                OpCode::OpLoop => "OP_LOOP",
+            }
+        )
     }
 }

@@ -21,7 +21,7 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
         None => {
             println!("Unknown opcode");
             offset + 1
-        }
+        },
         Some(op) => {
             let op: OpCode = op.clone().into();
             match op {
@@ -47,15 +47,15 @@ fn debug_instruction(bytecodes: &Bytecodes, offset: usize) -> usize {
                 OpCode::OpPopN => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpGetLocal => byte_instruction(&op, bytecodes, offset),
                 OpCode::OpSetLocal => byte_instruction(&op, bytecodes, offset),
-                OpCode::OpJumpIfFalse => jump_instruction(&op, 1,bytecodes, offset),
+                OpCode::OpJumpIfFalse => jump_instruction(&op, 1, bytecodes, offset),
                 OpCode::OpJump => jump_instruction(&op, 1, bytecodes, offset),
                 OpCode::OpLoop => jump_instruction(&op, -1, bytecodes, offset),
                 OpCode::OpUnKnown => {
                     println!("Unknown opcode {:?}", op);
                     offset + 1
-                }
+                },
             }
-        }
+        },
     }
 }
 
@@ -86,11 +86,7 @@ fn byte_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> usize 
 
 fn calc_str_op_padding(op: &OpCode) -> usize {
     let str_len = op.to_string().len();
-    let str_pad = if str_len > 16 {
-        0
-    } else {
-        16 - str_len
-    };
+    let str_pad = if str_len > 16 { 0 } else { 16 - str_len };
     str_pad
 }
 
@@ -100,11 +96,11 @@ fn constant_instruction(op: &OpCode, bytecodes: &Bytecodes, offset: usize) -> us
             let str_pad = calc_str_op_padding(op);
             print!("{:->width$} {} ", op, constant, width = str_pad);
             constant.clone()
-        }
+        },
         None => {
             print!("unknown value on index {}", offset);
             0 // TODO: fix(me) this will read wrong constant if reached
-        }
+        },
     };
 
     match bytecodes.values.get(constant as usize) {

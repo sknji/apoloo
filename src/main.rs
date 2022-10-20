@@ -1,7 +1,7 @@
-use std::{env, io};
 use std::fs::File;
 use std::io::prelude::*;
 use std::process::exit;
+use std::{env, io};
 
 use crate::bytecodes::Bytecodes;
 use crate::compiler::Compiler;
@@ -9,18 +9,18 @@ use crate::debug::debug_bytecode;
 use crate::opcode::OpCode;
 use crate::vm::{InterpretResult, VM};
 
-mod helpers;
-mod value;
 mod bytecodes;
-mod opcode;
-mod debug;
-mod token;
-mod lexer;
-mod parser_rules;
-mod parser;
-mod scope;
 mod codegen;
 mod compiler;
+mod debug;
+mod helpers;
+mod lexer;
+mod opcode;
+mod parser;
+mod parser_rules;
+mod scope;
+mod token;
+mod value;
 mod vm;
 
 fn repl() {
@@ -51,9 +51,9 @@ fn run_file(file_name: &str) {
         run(code)
     };
     match result {
-        InterpretResult::InterpretOk => {}
-        InterpretResult::InterpretCompileError => { exit(65) }
-        InterpretResult::InterpretRuntimeError => { exit(70) }
+        InterpretResult::InterpretOk => {},
+        InterpretResult::InterpretCompileError => exit(65),
+        InterpretResult::InterpretRuntimeError => exit(70),
     }
 }
 
