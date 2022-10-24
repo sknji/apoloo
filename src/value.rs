@@ -7,7 +7,7 @@ use std::ptr::write;
 use crate::Bytecodes;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub enum ValueKind {
+pub(crate) enum ValueKind {
     Nil,
     Bool,
     Number,
