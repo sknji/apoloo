@@ -21,7 +21,7 @@ pub(crate) enum ValueRepr {
     Boolean(bool),
     Number(f64),
     String(String),
-    Function(i8, Bytecodes, String),
+    Func(Function),
 }
 
 #[derive(Debug, Clone)]
@@ -106,7 +106,7 @@ impl PartialOrd for Value {
                     return Some(Ordering::Greater);
                 }
                 return Some(Ordering::Equal);
-            },
+            }
             (ValueRepr::String(l), ValueRepr::String(r)) => {
                 if l < r {
                     return Some(Ordering::Less);
@@ -114,7 +114,7 @@ impl PartialOrd for Value {
                     return Some(Ordering::Greater);
                 }
                 return Some(Ordering::Equal);
-            },
+            }
             _ => None,
         }
     }

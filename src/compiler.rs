@@ -6,11 +6,6 @@ use crate::scope::Scope;
 use crate::token::TokenType::TokenEof;
 use crate::value::ValueRepr;
 
-pub(crate) enum FunctionType {
-    TypeFunction,
-    TypeScript,
-}
-
 pub(crate) struct Compiler {
     pub function: ValueRepr,
     pub function_type: FunctionType,
