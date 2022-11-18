@@ -1,29 +1,36 @@
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
-use std::ops::Add;
 
 use crate::parser::Parser;
 use crate::token::TokenType;
 use crate::token::TokenType::*;
 
-pub(crate) struct ParseRule {
+pub struct ParseRule {
     pub precedence: ParsePrecedence,
     pub prefix: Option<fn(&mut Parser)>,
     pub infix: Option<fn(&mut Parser)>,
 }
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Hash, Debug)]
-pub(crate) enum ParsePrecedence {
+pub enum ParsePrecedence {
     PrecedenceNone = 1,
-    PrecedenceAssignment = 2, /* = */
-    PrecedenceOr = 3,         /* or */
-    PrecedenceAnd = 4,        /* and */
-    PrecedenceEquality = 5,   /* ==, != */
-    PrecedenceComparison = 6, /* <, >, <=, >= */
-    PrecedenceTerm = 7,       /* +, - */
-    PrecedenceFactor = 8,     /* *, / */
-    PrecedenceUnary = 9,      /* !, - */
-    PrecedenceCall = 10,      /* ., () */
+    PrecedenceAssignment = 2,
+    /* = */
+    PrecedenceOr = 3,
+    /* or */
+    PrecedenceAnd = 4,
+    /* and */
+    PrecedenceEquality = 5,
+    /* ==, != */
+    PrecedenceComparison = 6,
+    /* <, >, <=, >= */
+    PrecedenceTerm = 7,
+    /* +, - */
+    PrecedenceFactor = 8,
+    /* *, / */
+    PrecedenceUnary = 9,
+    /* !, - */
+    PrecedenceCall = 10,
+    /* ., () */
 
     PrecedencePrimary = 11,
 }
@@ -78,11 +85,11 @@ impl ParsePrecedence {
 // }
 
 impl Parser {
-    pub(crate) fn get_rule(&self, tok_type: &TokenType) -> &ParseRule {
+    pub fn get_rule(&self, tok_type: &TokenType) -> &ParseRule {
         self.parse_rules.get(tok_type).unwrap().clone()
     }
 
-    pub(crate) fn rules(&mut self) -> HashMap<TokenType, ParseRule> {
+    pub fn rules(&mut self) -> HashMap<TokenType, ParseRule> {
         let mut h = HashMap::new();
         h.insert(
             TokenLeftParen,

@@ -2,26 +2,25 @@ use std::collections::HashMap;
 
 use crate::codegen::Codegen;
 use crate::lexer::Lexer;
-use crate::parser_rules::ParsePrecedence::*;
+use crate::localscope::LocalScope;
+use crate::opcode::OpCode::*;
 use crate::parser_rules::{ParsePrecedence, ParseRule};
-use crate::scope::Scope;
-use crate::token::TokenType::*;
+use crate::parser_rules::ParsePrecedence::*;
 use crate::token::{Token, TokenType};
-use crate::Bytecodes;
-use crate::OpCode::*;
+use crate::token::TokenType::*;
 
-pub(crate) struct Parser {
-    pub(crate) lex: Lexer,
-    pub(crate) codegen: Codegen,
+pub struct Parser {
+    pub lex: Lexer,
+    pub codegen: Codegen,
     curr_tok: Option<Token>,
     prev_tok: Option<Token>,
-    pub(crate) parse_rules: HashMap<TokenType, ParseRule>,
-    pub(crate) had_error: bool,
-    pub(crate) scope: Scope,
+    pub parse_rules: HashMap<TokenType, ParseRule>,
+    pub had_error: bool,
+    pub scope: LocalScope,
 }
 
 impl<'a> Parser {
-    pub(crate) fn new(lex: Lexer) -> Parser {
+    pub fn new(lex: Lexer) -> Parser {
         let mut p = Parser {
             lex,
             curr_tok: None,
@@ -29,7 +28,7 @@ impl<'a> Parser {
             codegen: Codegen::new(),
             had_error: false,
             parse_rules: HashMap::new(),
-            scope: Scope::new(),
+            scope: LocalScope::new(),
         };
 
         p.parse_rules = p.rules();
@@ -41,7 +40,7 @@ impl<'a> Parser {
         self.curr_tok_type().is(tok_type)
     }
 
-    pub(crate) fn advance(&mut self) {
+    pub fn advance(&mut self) {
         self.prev_tok = self.curr_tok.clone();
 
         loop {
@@ -49,18 +48,18 @@ impl<'a> Parser {
             match &self.curr_tok {
                 None => break,
                 Some(t) if !t.is(TokenError) => return,
-                _ => {},
+                _ => {}
             }
 
             self.error_at_curr("Error at advance current")
         }
     }
 
-    pub(crate) fn emit_return(&mut self) -> usize {
+    pub fn emit_return(&mut self) -> usize {
         self.codegen.emit_return()
     }
 
-    pub(crate) fn consume(&mut self, tok_type: &TokenType, err_msg: &str) {
+    pub fn consume(&mut self, tok_type: &TokenType, err_msg: &str) {
         if self.curr_is(tok_type) {
             self.advance();
             return;
@@ -69,7 +68,7 @@ impl<'a> Parser {
         self.error_at_curr(err_msg);
     }
 
-    pub(crate) fn match_advance(&mut self, tok_type: &TokenType) -> bool {
+    pub fn match_advance(&mut self, tok_type: &TokenType) -> bool {
         if !self.curr_is(tok_type) {
             return false;
         }
@@ -78,36 +77,36 @@ impl<'a> Parser {
         true
     }
 
-    pub(crate) fn prev_tok_type(&self) -> TokenType {
+    pub fn prev_tok_type(&self) -> TokenType {
         match &self.prev_tok.clone() {
             Some(tok) => Some(&tok.token_type),
             None => None,
             _ => None,
         }
-        .unwrap()
-        .clone()
+            .unwrap()
+            .clone()
     }
 
-    pub(crate) fn curr_tok_type(&self) -> TokenType {
+    pub fn curr_tok_type(&self) -> TokenType {
         match &self.curr_tok.clone() {
             Some(tok) => Some(&tok.token_type),
             None => None,
             _ => None,
         }
-        .unwrap()
-        .clone()
+            .unwrap()
+            .clone()
     }
 
-    pub(crate) fn grouping(&mut self) {
+    pub fn grouping(&mut self) {
         self.expression();
         self.consume(&TokenRightParen, "Expect ')' after expression.")
     }
 
-    pub(crate) fn expression(&mut self) {
+    pub fn expression(&mut self) {
         self.parse(&PrecedenceAssignment);
     }
 
-    pub(crate) fn block(&mut self) {
+    pub fn block(&mut self) {
         while !self.curr_is(&TokenRightBrace) && !self.curr_is(&TokenEof) {
             self.declaration();
         }
@@ -115,7 +114,7 @@ impl<'a> Parser {
         self.consume(&TokenRightBrace, "Expected '}' after block");
     }
 
-    pub(crate) fn var_declaration(&mut self) {
+    pub fn var_declaration(&mut self) {
         let global = self.parse_variable("Expect variable name");
         if self.match_advance(&TokenEqual) {
             self.expression();
@@ -128,13 +127,13 @@ impl<'a> Parser {
         self.define_var(global as u8);
     }
 
-    pub(crate) fn expression_statement(&mut self) {
+    pub fn expression_statement(&mut self) {
         self.expression();
         self.consume(&TokenSemicolon, "Expect ';' after value.");
         self.codegen.emit_op(OpPop);
     }
 
-    pub(crate) fn if_statement(&mut self) {
+    pub fn if_statement(&mut self) {
         self.consume(&TokenLeftParen, "Expect '(' after 'if'.");
         self.expression();
         self.consume(&TokenRightParen, "Expect ')' after condition.");
@@ -155,13 +154,13 @@ impl<'a> Parser {
         self.codegen.patch_jump(else_jump);
     }
 
-    pub(crate) fn print_statement(&mut self) {
+    pub fn print_statement(&mut self) {
         self.expression();
         self.consume(&TokenSemicolon, "Expect ';' after value.");
         self.codegen.emit_op(OpPrint);
     }
 
-    pub(crate) fn for_statement(&mut self) {
+    pub fn for_statement(&mut self) {
         self.scope.begin_scope();
         self.consume(&TokenLeftParen, "Expect '(' after 'for'.");
 
@@ -207,7 +206,7 @@ impl<'a> Parser {
         self.scope.end_scope();
     }
 
-    pub(crate) fn while_statement(&mut self) {
+    pub fn while_statement(&mut self) {
         let loop_start = self.codegen.bytecodes.code_count;
         self.consume(&TokenLeftParen, "Expect '(' after 'while'.");
         self.expression();
@@ -224,7 +223,7 @@ impl<'a> Parser {
         self.codegen.emit_op(OpPop);
     }
 
-    pub(crate) fn declaration(&mut self) {
+    pub fn declaration(&mut self) {
         if self.match_advance(&TokenVar) {
             self.var_declaration();
         } else {
@@ -232,7 +231,7 @@ impl<'a> Parser {
         }
     }
 
-    pub(crate) fn statement(&mut self) {
+    pub fn statement(&mut self) {
         if self.match_advance(&TokenPrint) {
             self.print_statement();
         } else if self.match_advance(&TokenIf) {
@@ -250,7 +249,7 @@ impl<'a> Parser {
         }
     }
 
-    pub(crate) fn number(&mut self) {
+    pub fn number(&mut self) {
         let value = self.prev_tok.as_ref();
         let value: f64 = match value {
             None => 0.0,
@@ -260,7 +259,7 @@ impl<'a> Parser {
         self.codegen.emit_const_f64(value);
     }
 
-    pub(crate) fn string(&mut self) {
+    pub fn string(&mut self) {
         let value = self.prev_tok.as_ref();
         let value = match value {
             None => "",
@@ -270,7 +269,7 @@ impl<'a> Parser {
         self.codegen.emit_const_string(value.to_owned());
     }
 
-    pub(crate) fn named_variable(&mut self) {
+    pub fn named_variable(&mut self) {
         let name = &self.prev_tok.as_ref().unwrap().raw;
 
         let (get_op, set_op, arg) = match self.scope.resolve_local(name) {
@@ -282,18 +281,18 @@ impl<'a> Parser {
             true => {
                 self.expression();
                 self.codegen.emit_op_operand(set_op, arg);
-            },
+            }
             false => {
                 self.codegen.emit_op_operand(get_op, arg);
-            },
+            }
         }
     }
 
-    pub(crate) fn variable(&mut self) {
+    pub fn variable(&mut self) {
         self.named_variable()
     }
 
-    pub(crate) fn literal(&mut self) {
+    pub fn literal(&mut self) {
         let prev_tok_type = self.prev_tok_type();
         match prev_tok_type {
             TokenFalse => self.codegen.emit_op(OpFalse),
@@ -304,7 +303,7 @@ impl<'a> Parser {
         };
     }
 
-    pub(crate) fn unary(&mut self) {
+    pub fn unary(&mut self) {
         let prev_tok_type = self.prev_tok_type();
 
         self.parse(&PrecedenceUnary);
@@ -316,7 +315,7 @@ impl<'a> Parser {
         };
     }
 
-    pub(crate) fn binary(&mut self) {
+    pub fn binary(&mut self) {
         let prev_tok_type = self.prev_tok_type();
         let rule = self.get_rule(&prev_tok_type);
 
@@ -339,24 +338,24 @@ impl<'a> Parser {
         };
     }
 
-    pub(crate) fn error_at_curr(&mut self, msg: &str) {
+    pub fn error_at_curr(&mut self, msg: &str) {
         self.error_at(&self.curr_tok.clone(), msg)
     }
 
-    pub(crate) fn error(&mut self, msg: &str) {
+    pub fn error(&mut self, msg: &str) {
         self.error_at(&self.prev_tok.clone(), msg)
     }
 
-    pub(crate) fn error_at(&mut self, token: &Option<Token>, msg: &str) {
+    pub fn error_at(&mut self, token: &Option<Token>, msg: &str) {
         let tok = token.as_ref().unwrap();
 
         eprint!("[line {}] Error", tok.line);
         match tok.token_type {
             TokenEof => eprint!(" at end"),
-            TokenError => {},
+            TokenError => {}
             _ => {
                 eprint!(" at {}", tok.raw)
-            },
+            }
         }
 
         eprintln!(": {}", msg);
@@ -364,7 +363,7 @@ impl<'a> Parser {
         self.had_error = true
     }
 
-    pub(crate) fn parse(&mut self, precedence: &ParsePrecedence) {
+    pub fn parse(&mut self, precedence: &ParsePrecedence) {
         self.advance();
 
         let tok_type: &TokenType = &self.prev_tok_type();
@@ -400,7 +399,7 @@ impl<'a> Parser {
         }
     }
 
-    pub(crate) fn parse_variable(&mut self, msg: &str) -> usize {
+    pub fn parse_variable(&mut self, msg: &str) -> usize {
         self.consume(&TokenIdentifier, msg);
 
         self.declare_var();
@@ -412,7 +411,7 @@ impl<'a> Parser {
         self.ident_const()
     }
 
-    pub(crate) fn ident_const(&mut self) -> usize {
+    pub fn ident_const(&mut self) -> usize {
         let value = match self.prev_tok.as_ref() {
             None => "",
             Some(val) => &val.raw,
@@ -421,7 +420,7 @@ impl<'a> Parser {
         self.codegen.emit_const_string(value.to_owned())
     }
 
-    pub(crate) fn add_local(&mut self, tok: &Token) {
+    pub fn add_local(&mut self, tok: &Token) {
         if self.scope.local_count >= i8::MAX {
             // TODO: error too many variables in function
             return;
@@ -436,7 +435,7 @@ impl<'a> Parser {
         self.scope.add_local(&tok.raw)
     }
 
-    pub(crate) fn declare_var(&mut self) {
+    pub fn declare_var(&mut self) {
         if self.scope.scope_depth == 0 {
             return;
         }
@@ -445,7 +444,7 @@ impl<'a> Parser {
         self.add_local(&prev_tok);
     }
 
-    pub(crate) fn define_var(&mut self, global: u8) {
+    pub fn define_var(&mut self, global: u8) {
         if self.scope.scope_depth > 0 {
             return;
         }
@@ -453,7 +452,7 @@ impl<'a> Parser {
         self.codegen.emit_bytes(&[OpDefineGlobal.into(), global]);
     }
 
-    pub(crate) fn and_(&mut self) {
+    pub fn and_(&mut self) {
         let end_jump = self.codegen.emit_op(OpJumpIfFalse);
         self.codegen.emit_op(OpPop);
 
@@ -462,7 +461,7 @@ impl<'a> Parser {
         self.codegen.patch_jump(end_jump);
     }
 
-    pub(crate) fn or_(&mut self) {
+    pub fn or_(&mut self) {
         let else_jump = self.codegen.emit_op(OpJumpIfFalse);
         let end_jump = self.codegen.emit_op(OpJump);
 

@@ -7,7 +7,7 @@ use std::ptr::write;
 use crate::Bytecodes;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub(crate) enum ValueKind {
+pub enum ValueKind {
     Nil,
     Bool,
     Number,
@@ -16,16 +16,15 @@ pub(crate) enum ValueKind {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum ValueRepr {
+pub enum ValueRepr {
     Nil(),
     Boolean(bool),
     Number(f64),
     String(String),
-    Func(Function),
 }
 
 #[derive(Debug, Clone)]
-pub struct Value(pub(crate) ValueRepr);
+pub struct Value(pub ValueRepr);
 
 impl Neg for Value {
     type Output = Self;
@@ -121,12 +120,11 @@ impl PartialOrd for Value {
 }
 
 impl ValueRepr {
-    pub(crate) fn kind(&self) -> ValueKind {
+    pub fn kind(&self) -> ValueKind {
         match &self {
             ValueRepr::Boolean(_) => ValueKind::Bool,
             ValueRepr::Number(_) => ValueKind::Number,
             ValueRepr::String(_) => ValueKind::String,
-            ValueRepr::Function(_, _, _) => ValueKind::Function,
             ValueRepr::Nil() => ValueKind::Nil,
         }
     }
@@ -144,18 +142,17 @@ impl fmt::Display for Value {
             ValueRepr::Boolean(val) => write!(f, "{}", val),
             ValueRepr::Number(val) => write!(f, "{}", val),
             ValueRepr::String(val) => write!(f, "{}", val),
-            ValueRepr::Function(_, _, name) => write!(f, "<fn {}>", name),
             ValueRepr::Nil() => write!(f, "NIL"),
         }
     }
 }
 
 impl Value {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self { 0: Default::default() }
     }
 
-    pub(crate) fn print(&self) {
+    pub fn print(&self) {
         println!("{}", self)
     }
 }

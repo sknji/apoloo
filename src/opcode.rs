@@ -1,8 +1,6 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use crate::value::Value;
-
 #[repr(u8)]
 #[derive(PartialEq, PartialOrd, Copy, Clone, Debug)]
 pub enum OpCode {
@@ -66,7 +64,7 @@ impl From<u8> for OpCode {
             o => {
                 eprintln!("Opcode '{}' not found. Compiler error", o);
                 OpCode::OpUnKnown
-            },
+            }
         }
     }
 }

@@ -1,24 +1,27 @@
-use crate::{Bytecodes, debug};
+use crate::bytecodes::Bytecodes;
 use crate::codegen::Codegen;
+use crate::debug;
 use crate::lexer::Lexer;
+use crate::localscope::LocalScope;
 use crate::parser::Parser;
-use crate::scope::Scope;
 use crate::token::TokenType::TokenEof;
 use crate::value::ValueRepr;
 
-pub(crate) struct Compiler {
+pub struct Compiler {
     pub function: ValueRepr,
-    pub function_type: FunctionType,
-    pub scope: Scope,
+    pub scope: LocalScope,
     pub codegen: Codegen,
+}
+
+pub struct CompilerScope {
+
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Self {
             function: Default::default(),
-            function_type: FunctionType::TypeFunction,
-            scope: Scope::new(),
+            scope: LocalScope::new(),
             codegen: Codegen::new(),
         }
     }

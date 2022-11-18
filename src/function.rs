@@ -1,9 +1,9 @@
-pub(crate) enum FunctionType {
+pub enum FunctionType {
     TypeFunction,
     TypeScript,
 }
 
-pub(crate) struct Function {
+pub struct Function {
     pub arity: i8,
     pub bytecodes: Bytecodes,
     pub name: String,

@@ -1,8 +1,8 @@
 use std::str;
 
 use crate::helpers::*;
-use crate::token::TokenType::*;
 use crate::token::*;
+use crate::token::TokenType::*;
 
 #[derive(Debug, Clone)]
 pub struct Lexer {
@@ -28,12 +28,12 @@ impl Lexer {
         Token::new(type_, str, self.line, self.col)
     }
 
-    pub(crate) fn incr_curr(&mut self) {
+    pub fn incr_curr(&mut self) {
         self.current += 1;
         self.col += 1;
     }
 
-    pub(crate) fn incr_line(&mut self) {
+    pub fn incr_line(&mut self) {
         self.line += 1;
         self.col = 0
     }
@@ -106,16 +106,16 @@ impl Lexer {
             match ch {
                 ' ' | '\r' | '\t' => {
                     self.advance();
-                },
+                }
                 '\n' => {
                     self.incr_line();
                     self.advance();
-                },
+                }
                 '/' if self.peek_is('/', Some(1)) => {
                     while !self.peek1_is('\n') && !self.is_end() {
                         self.advance();
                     }
-                },
+                }
                 _ => return,
             }
         }
@@ -207,28 +207,28 @@ impl Lexer {
                     false => TokenBang,
                 };
                 self.make_token(tok_type)
-            },
+            }
             '=' => {
                 let tok_type = match self.next_matches('=') {
                     true => TokenEqualEqual,
                     false => TokenEqual,
                 };
                 self.make_token(tok_type)
-            },
+            }
             '<' => {
                 let tok_type = match self.next_matches('=') {
                     true => TokenLessEqual,
                     false => TokenEqual,
                 };
                 self.make_token(tok_type)
-            },
+            }
             '>' => {
                 let tok_type = match self.next_matches('=') {
                     true => TokenGreaterEqual,
                     false => TokenGreater,
                 };
                 self.make_token(tok_type)
-            },
+            }
             '"' => self.string(),
             _ => self.error_token(format!("unexpected character {ch}").as_ref()),
         }

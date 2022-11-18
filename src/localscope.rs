@@ -1,10 +1,10 @@
-pub(crate) struct Scope {
+pub struct LocalScope {
     pub local_count: i8,
     pub scope_depth: i8,
     pub locals: Vec<Local>,
 }
 
-pub(crate) struct Local {
+pub struct Local {
     name: String,
     depth: i8,
 }
@@ -15,7 +15,7 @@ impl Local {
     }
 }
 
-impl Scope {
+impl LocalScope {
     pub fn new() -> Self {
         Self { local_count: 0, locals: Vec::new(), scope_depth: 0 }
     }
@@ -66,12 +66,12 @@ impl Scope {
         while counter >= 0 {
             let l = self.locals.get(counter as usize);
             match l {
-                None => {},
+                None => {}
                 Some(v) => {
                     if v.name.eq(name) {
                         return Some(counter as u8);
                     }
-                },
+                }
             }
 
             counter -= 1;

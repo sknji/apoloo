@@ -8,10 +8,10 @@ use crate::token::TokenType::{
 
 #[derive(Debug, Clone)]
 pub struct Token {
-    pub(crate) token_type: TokenType,
-    pub(crate) raw: String,
-    pub(crate) line: i64,
-    pub(crate) col: i64,
+    pub token_type: TokenType,
+    pub raw: String,
+    pub line: i64,
+    pub col: i64,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -99,7 +99,7 @@ pub fn kw_type_from_str(token_type: &str) -> TokenType {
 }
 
 impl TokenType {
-    pub(crate) fn is(&self, rhs: &TokenType) -> bool {
+    pub fn is(&self, rhs: &TokenType) -> bool {
         self == rhs
     }
 }
